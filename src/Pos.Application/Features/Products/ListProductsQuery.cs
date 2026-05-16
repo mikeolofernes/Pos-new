@@ -20,8 +20,10 @@ public class ListProductsHandler : IRequestHandler<ListProductsQuery, Page<Produ
         var query = _db.Products.AsNoTracking().Where(p => p.DeletedAt == null);
         if (!string.IsNullOrWhiteSpace(req.Q))
         {
-            var q = $"%{req.Q.Trim()}%";
-            query = query.Where(p => EF.Functions.ILike(p.Name, q) || EF.Functions.ILike(p.Sku, q));
+            // EF Core 9 + Npgsql translates ToLower + Contains to a case-insensitive
+            // LIKE / ILIKE depending on collation. Keeps Pos.Application provider-agnostic.
+            var q = req.Q.Trim().ToLowerInvariant();
+            query = query.Where(p => p.Name.ToLower().Contains(q) || p.Sku.ToLower().Contains(q));
         }
 
         var total = await query.CountAsync(ct);

@@ -1,4 +1,5 @@
 @inherits LayoutComponentBase
+@implements IDisposable
 @inject AuthState Auth
 @inject NavigationManager Nav
 
@@ -15,15 +16,12 @@
                            OnClick="@(() => _drawerOpen = !_drawerOpen)" Edge="Edge.Start" />
             <MudText Typo="Typo.h6" Class="ms-2">POS</MudText>
             <MudSpacer />
-            @if (_offline)
-            {
-                <MudChip T="string" Color="Color.Warning" Size="Size.Small" Icon="@Icons.Material.Filled.CloudOff">Offline</MudChip>
-            }
             <MudText Typo="Typo.body2" Class="ms-3 d-none d-sm-inline">@Auth.Current?.DisplayName</MudText>
             <MudIconButton Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit" OnClick="Logout" />
         </MudAppBar>
 
-        <MudDrawer @bind-Open="_drawerOpen" Elevation="2" ClipMode="DrawerClipMode.Always" Variant="@DrawerVariant.Mini" OpenMiniOnHover="true">
+        <MudDrawer @bind-Open="_drawerOpen" Elevation="2" ClipMode="DrawerClipMode.Always"
+                   Variant="@DrawerVariant.Mini" OpenMiniOnHover="true">
             <NavMenu />
         </MudDrawer>
 
@@ -39,7 +37,6 @@ else
 
 @code {
     private bool _drawerOpen = true;
-    private bool _offline;
 
     private readonly MudTheme _theme = new()
     {
@@ -55,10 +52,6 @@ else
             Surface = "#FFFFFF",
             TextPrimary = "#0F172A",
             TextSecondary = "#475569"
-        },
-        Typography = new Typography
-        {
-            Default = new DefaultTypography { FontFamily = new[] { "Roboto", "-apple-system", "Segoe UI", "sans-serif" } }
         },
         LayoutProperties = new LayoutProperties { DefaultBorderRadius = "10px" }
     };
