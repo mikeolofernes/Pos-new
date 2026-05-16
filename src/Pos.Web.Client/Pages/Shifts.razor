@@ -2,49 +2,53 @@
 @inject ApiClient Api
 @inject AuthState Auth
 @inject NavigationManager Nav
+@inject ISnackbar Snackbar
 
 <PageTitle>Shifts</PageTitle>
 
-<div class="page-head">
-    <h1 class="h3">Shifts</h1>
-</div>
+<MudText Typo="Typo.h5" Class="mb-3">Shifts</MudText>
 
-<div class="row g-3">
-    <div class="col-12 col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <h2 class="h5">Open shift</h2>
-                <div class="mb-2"><label class="form-label">Register Id</label>
-                    <input class="form-control" @bind="_registerId" /></div>
-                <div class="mb-3"><label class="form-label">Opening float</label>
-                    <input type="number" step="0.01" class="form-control" @bind="_openingFloat" /></div>
-                <button class="btn btn-primary w-100" @onclick="Open" disabled="@_busy">Open shift</button>
-                @if (_openMsg is not null) { <div class="mt-3 alert alert-info py-2">@_openMsg</div> }
-            </div>
-        </div>
-    </div>
-    <div class="col-12 col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <h2 class="h5">Close shift</h2>
-                <div class="mb-2"><label class="form-label">Shift Id</label>
-                    <input class="form-control" @bind="_closeShiftId" /></div>
-                <div class="mb-3"><label class="form-label">Closing declared (cash)</label>
-                    <input type="number" step="0.01" class="form-control" @bind="_closingDeclared" /></div>
-                <button class="btn btn-primary w-100" @onclick="Close" disabled="@_busy">Close shift</button>
-                @if (_closeMsg is not null) { <div class="mt-3 alert alert-info py-2">@_closeMsg</div> }
-            </div>
-        </div>
-    </div>
-</div>
+<MudGrid Spacing="3">
+    <MudItem xs="12" md="6">
+        <MudCard>
+            <MudCardHeader>
+                <CardHeaderContent><MudText Typo="Typo.h6">Open shift</MudText></CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudTextField @bind-Value="_registerId" Label="Register Id" Variant="Variant.Outlined" Class="mb-3" />
+                <MudNumericField @bind-Value="_openingFloat" Label="Opening float"
+                                 Variant="Variant.Outlined" Format="N2" Min="0" />
+            </MudCardContent>
+            <MudCardActions>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                           FullWidth="true" OnClick="Open" Disabled="@_busy">Open shift</MudButton>
+            </MudCardActions>
+        </MudCard>
+    </MudItem>
+
+    <MudItem xs="12" md="6">
+        <MudCard>
+            <MudCardHeader>
+                <CardHeaderContent><MudText Typo="Typo.h6">Close shift</MudText></CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudTextField @bind-Value="_closeShiftId" Label="Shift Id" Variant="Variant.Outlined" Class="mb-3" />
+                <MudNumericField @bind-Value="_closingDeclared" Label="Closing declared (cash)"
+                                 Variant="Variant.Outlined" Format="N2" Min="0" />
+            </MudCardContent>
+            <MudCardActions>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                           FullWidth="true" OnClick="Close" Disabled="@_busy">Close shift</MudButton>
+            </MudCardActions>
+        </MudCard>
+    </MudItem>
+</MudGrid>
 
 @code {
     private string _registerId = "";
     private decimal _openingFloat;
     private string _closeShiftId = "";
     private decimal _closingDeclared;
-    private string? _openMsg;
-    private string? _closeMsg;
     private bool _busy;
     private Guid _shopId;
 
@@ -58,24 +62,27 @@
 
     private async Task Open()
     {
-        _busy = true; _openMsg = null;
+        _busy = true;
         try
         {
-            if (!Guid.TryParse(_registerId, out var rid)) { _openMsg = "Invalid register id"; return; }
+            if (!Guid.TryParse(_registerId, out var rid)) { Snackbar.Add("Invalid register id", Severity.Warning); return; }
             var id = await Api.OpenShiftAsync(new OpenShiftRequest(_shopId, rid, _openingFloat));
-            _openMsg = id is null ? "Failed (already open?)" : $"Opened shift {id}";
+            if (id is null) Snackbar.Add("Failed (already open?)", Severity.Error);
+            else Snackbar.Add($"Opened shift {id}", Severity.Success);
         }
         finally { _busy = false; }
     }
 
     private async Task Close()
     {
-        _busy = true; _closeMsg = null;
+        _busy = true;
         try
         {
-            if (!Guid.TryParse(_closeShiftId, out var sid)) { _closeMsg = "Invalid shift id"; return; }
+            if (!Guid.TryParse(_closeShiftId, out var sid)) { Snackbar.Add("Invalid shift id", Severity.Warning); return; }
             var r = await Api.CloseShiftAsync(sid, _closingDeclared);
-            _closeMsg = r is null ? "Failed" : $"Expected {r.Expected:0.00}, declared {r.Declared:0.00}, variance {r.Variance:0.00}";
+            if (r is null) Snackbar.Add("Failed", Severity.Error);
+            else Snackbar.Add($"Expected {r.Expected:0.00}, declared {r.Declared:0.00}, variance {r.Variance:0.00}",
+                              r.Variance == 0 ? Severity.Success : Severity.Warning);
         }
         finally { _busy = false; }
     }

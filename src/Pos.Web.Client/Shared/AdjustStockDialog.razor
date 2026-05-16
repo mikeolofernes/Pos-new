@@ -1,0 +1,28 @@
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.body2" Class="mb-3">@ProductName</MudText>
+        <MudNumericField @bind-Value="_delta" Label="Quantity delta (negative to reduce)"
+                         Variant="Variant.Outlined" Format="N3" Class="mb-3" />
+        <MudNumericField @bind-Value="_cost" Label="Unit cost"
+                         Variant="Variant.Outlined" Format="N2" Min="0" Class="mb-3" />
+        <MudTextField @bind-Value="_reason" Label="Reason" Variant="Variant.Outlined" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit" Disabled="@(_delta == 0)">Apply</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public string ProductName { get; set; } = "";
+
+    private decimal _delta;
+    private decimal _cost;
+    private string _reason = "Manual";
+
+    public sealed record AdjustResult(decimal Delta, decimal UnitCost, string Reason);
+
+    private void Cancel() => MudDialog.Cancel();
+    private void Submit() => MudDialog.Close(DialogResult.Ok(new AdjustResult(_delta, _cost, _reason)));
+}

@@ -5,141 +5,126 @@
 @inject NavigationManager Nav
 @inject OfflineOutbox Outbox
 @inject IndexedDbInterop Idb
+@inject IDialogService Dialogs
+@inject ISnackbar Snackbar
 @inject IJSRuntime JS
 
 <PageTitle>POS</PageTitle>
 
 @if (!Auth.IsAuthenticated)
 {
-    <div class="p-4">Redirecting…</div>
+    <MudText>Redirecting…</MudText>
     return;
 }
 
-<div class="pos-layout">
+<MudGrid Spacing="2" Class="pos-grid-root">
     <!-- Catalog pane -->
-    <section class="pos-catalog">
-        <div class="pos-search">
-            <input class="form-control form-control-lg" placeholder="Search or scan barcode…"
-                   @bind="_search" @bind:event="oninput" @onkeydown="OnSearchKey" />
-            @if (_offline)
+    <MudItem xs="12" md="8">
+        <MudPaper Class="pa-3 pos-pane" Elevation="1">
+            <MudTextField @bind-Value="_search" @bind-Value:after="StateHasChanged"
+                          Immediate="true"
+                          Placeholder="Search or scan barcode…"
+                          Variant="Variant.Outlined" Margin="Margin.Dense"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          OnKeyDown="OnSearchKey"
+                          Class="mb-3" />
+
+            @if (_loading)
             {
-                <span class="badge bg-warning text-dark ms-2 align-self-center">Offline</span>
+                <MudProgressLinear Indeterminate="true" />
             }
-        </div>
-        @if (_loading)
-        {
-            <div class="p-3 text-muted">Loading catalog…</div>
-        }
-        else
-        {
-            <div class="pos-grid">
-                @foreach (var p in Filtered)
-                {
-                    <button class="pos-tile" @onclick="() => AddToCart(p)">
-                        <div class="pos-tile-name">@p.Name</div>
-                        <div class="pos-tile-sku">@p.Sku</div>
-                        <div class="pos-tile-price">@FormatMoney(p.Price, p.Currency)</div>
-                    </button>
-                }
-                @if (Filtered.Count == 0)
-                {
-                    <div class="p-3 text-muted">No products match.</div>
-                }
-            </div>
-        }
-    </section>
-
-    <!-- Cart pane -->
-    <aside class="pos-cart">
-        <header class="pos-cart-head">
-            <h2 class="h5 mb-0">Cart</h2>
-            <button class="btn btn-sm btn-outline-secondary" @onclick="ClearCart" disabled="@(_cart.Count == 0)">Clear</button>
-        </header>
-
-        <div class="pos-cart-lines">
-            @foreach (var (line, idx) in _cart.Select((l, i) => (l, i)))
+            else
             {
-                <div class="pos-line">
-                    <div class="pos-line-main">
-                        <div class="fw-semibold">@line.Product.Name</div>
-                        <div class="text-muted small">@FormatMoney(line.UnitPrice, line.Currency) ea</div>
-                    </div>
-                    <div class="pos-line-qty">
-                        <button class="btn btn-sm btn-outline-secondary" @onclick="() => ChangeQty(idx, -1)">−</button>
-                        <span class="mx-2 fw-semibold">@line.Quantity</span>
-                        <button class="btn btn-sm btn-outline-secondary" @onclick="() => ChangeQty(idx, 1)">+</button>
-                    </div>
-                    <div class="pos-line-total">@FormatMoney(line.Quantity * line.UnitPrice, line.Currency)</div>
+                <div class="pos-tiles">
+                    @foreach (var p in Filtered)
+                    {
+                        <MudPaper Class="pos-tile pa-3" Elevation="0" Outlined="true" @onclick="() => AddToCart(p)">
+                            <MudText Typo="Typo.subtitle2" Class="text-truncate">@p.Name</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Default" Class="text-muted">@p.Sku</MudText>
+                            <MudSpacer />
+                            <MudText Typo="Typo.h6" Color="Color.Primary">@FormatMoney(p.Price, p.Currency)</MudText>
+                        </MudPaper>
+                    }
+                    @if (Filtered.Count == 0)
+                    {
+                        <MudText Class="text-muted pa-3">No products match.</MudText>
+                    }
                 </div>
             }
-            @if (_cart.Count == 0)
-            {
-                <div class="p-3 text-muted">Tap a product to add it.</div>
-            }
-        </div>
+        </MudPaper>
+    </MudItem>
 
-        <footer class="pos-cart-foot">
-            <div class="d-flex justify-content-between"><span>Subtotal</span><span>@FormatMoney(Subtotal, Currency)</span></div>
-            <div class="d-flex justify-content-between text-muted small"><span>Tax (estimated)</span><span>@FormatMoney(EstimatedTax, Currency)</span></div>
-            <div class="d-flex justify-content-between fs-4 fw-bold border-top pt-2 mt-2">
-                <span>Total</span><span>@FormatMoney(Total, Currency)</span>
+    <!-- Cart pane -->
+    <MudItem xs="12" md="4">
+        <MudPaper Class="pos-pane d-flex flex-column" Elevation="1">
+            <div class="d-flex align-items-center pa-3 border-bottom">
+                <MudText Typo="Typo.h6">Cart</MudText>
+                <MudSpacer />
+                <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Default"
+                           Disabled="@(_cart.Count == 0)" OnClick="ClearCart">Clear</MudButton>
             </div>
-            <button class="btn btn-primary btn-lg w-100 mt-3" disabled="@(_cart.Count == 0 || _busy)" @onclick="OpenTender">
-                @(_busy ? "Processing…" : "Charge")
-            </button>
-            @if (_pendingOutbox > 0)
-            {
-                <div class="small text-muted mt-2">@_pendingOutbox queued · <a href="#" @onclick:preventDefault @onclick="Drain">Sync now</a></div>
-            }
-            @if (_error is not null)
-            {
-                <div class="alert alert-danger py-2 mt-2 mb-0">@_error</div>
-            }
-        </footer>
-    </aside>
-</div>
 
-@if (_showTender)
-{
-    <div class="modal-overlay" @onclick="() => _showTender = false">
-        <div class="modal-card" @onclick:stopPropagation>
-            <h3 class="h5">Tender @FormatMoney(Total, Currency)</h3>
-            <div class="mb-3">
-                <label class="form-label">Method</label>
-                <select class="form-select form-select-lg" @bind="_tenderMethod">
-                    <option value="cash">Cash</option>
-                    <option value="card">Card</option>
-                    <option value="wallet">Wallet</option>
-                </select>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Amount tendered</label>
-                <input type="number" step="0.01" class="form-control form-control-lg"
-                       @bind="_tenderAmount" />
-            </div>
-            <div class="d-flex justify-content-between mb-3">
-                <span>Change due</span>
-                <strong>@FormatMoney(Math.Max(0, _tenderAmount - Total), Currency)</strong>
-            </div>
-            <div class="d-flex gap-2">
-                <button class="btn btn-outline-secondary flex-fill" @onclick="() => _showTender = false">Cancel</button>
-                <button class="btn btn-primary flex-fill" disabled="@(_tenderAmount < Total)" @onclick="Commit">Complete</button>
-            </div>
-        </div>
-    </div>
-}
+            <MudList T="object" Dense="true" Class="flex-grow-1 pos-cart-list">
+                @foreach (var (line, idx) in _cart.Select((l, i) => (l, i)))
+                {
+                    <MudListItem T="object">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <MudText Typo="Typo.body2" Class="fw-semibold">@line.Product.Name</MudText>
+                                <MudText Typo="Typo.caption" Class="text-muted">@FormatMoney(line.UnitPrice, line.Currency) ea</MudText>
+                            </div>
+                            <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small"
+                                           OnClick="@(() => ChangeQty(idx, -1))" />
+                            <MudText Class="mx-2 fw-bold">@line.Quantity</MudText>
+                            <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" Color="Color.Primary"
+                                           OnClick="@(() => ChangeQty(idx, 1))" />
+                            <MudText Class="ms-3" Style="min-width:80px;text-align:right;">
+                                @FormatMoney(line.Quantity * line.UnitPrice, line.Currency)
+                            </MudText>
+                        </div>
+                    </MudListItem>
+                }
+                @if (_cart.Count == 0)
+                {
+                    <MudListItem T="object">
+                        <MudText Class="text-muted">Tap a product to add it.</MudText>
+                    </MudListItem>
+                }
+            </MudList>
 
-@if (_lastReceipt is not null)
-{
-    <div class="modal-overlay" @onclick="() => _lastReceipt = null">
-        <div class="modal-card text-center" @onclick:stopPropagation>
-            <div class="display-6">✓</div>
-            <div class="fw-bold">Sale @_lastReceipt.Number</div>
-            <div class="text-muted mb-3">@FormatMoney(_lastReceipt.Total, Currency) · change @FormatMoney(_lastReceipt.Change, Currency)</div>
-            <button class="btn btn-primary w-100" @onclick="() => _lastReceipt = null">New sale</button>
-        </div>
-    </div>
-}
+            <div class="pa-3 border-top" style="background:#fafbfc">
+                <div class="d-flex justify-content-between">
+                    <MudText>Subtotal</MudText>
+                    <MudText>@FormatMoney(Subtotal, Currency)</MudText>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <MudText Typo="Typo.caption" Class="text-muted">Tax (estimated)</MudText>
+                    <MudText Typo="Typo.caption" Class="text-muted">@FormatMoney(EstimatedTax, Currency)</MudText>
+                </div>
+                <MudDivider Class="my-2" />
+                <div class="d-flex justify-content-between">
+                    <MudText Typo="Typo.h6">Total</MudText>
+                    <MudText Typo="Typo.h6">@FormatMoney(Total, Currency)</MudText>
+                </div>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large"
+                           FullWidth="true" Class="mt-3"
+                           Disabled="@(_cart.Count == 0 || _busy)"
+                           OnClick="OpenTender">
+                    @if (_busy) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="me-2" /> }
+                    Charge
+                </MudButton>
+                @if (_pendingOutbox > 0)
+                {
+                    <div class="text-center mt-2">
+                        <MudChip T="string" Size="Size.Small" Color="Color.Warning" Icon="@Icons.Material.Filled.Sync"
+                                 OnClick="Drain">@_pendingOutbox queued — sync now</MudChip>
+                    </div>
+                }
+            </div>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
 
 @code {
     private sealed record Line(ProductDto Product, decimal Quantity, decimal UnitPrice, string Currency);
@@ -150,14 +135,8 @@
     private bool _loading = true;
     private bool _busy;
     private bool _offline;
-    private bool _showTender;
-    private string _tenderMethod = "cash";
-    private decimal _tenderAmount;
-    private string? _error;
-    private SaleSummary? _lastReceipt;
     private int _pendingOutbox;
 
-    // Demo values - in production resolve from shop/register/shift selector
     private Guid _shopId, _registerId, _shiftId, _warehouseId;
 
     private List<ProductDto> Filtered =>
@@ -168,7 +147,7 @@
                 p.Sku.Contains(_search, StringComparison.OrdinalIgnoreCase)).ToList();
 
     private decimal Subtotal => _cart.Sum(l => l.Quantity * l.UnitPrice);
-    private decimal EstimatedTax => Math.Round(Subtotal * 0.0875m, 2);   // server-authoritative; UI hint only
+    private decimal EstimatedTax => Math.Round(Subtotal * 0.0875m, 2);
     private decimal Total => Subtotal + EstimatedTax;
     private string Currency => _cart.FirstOrDefault()?.Currency ?? "USD";
 
@@ -203,10 +182,6 @@
             if (shops.Count > 0)
             {
                 _shopId = shops[0].Id;
-                // The demo seed creates one register + one warehouse named WH-MAIN — keep local
-                // shift handling minimal: if you need to handle shifts properly, redirect to a
-                // shift-open screen first. We'll mint placeholder GUIDs for the demo so the UI
-                // renders; CommitSaleAsync will surface a clear error if the shift isn't open.
                 _registerId = Guid.NewGuid();
                 _shiftId = Guid.NewGuid();
                 _warehouseId = Guid.NewGuid();
@@ -233,7 +208,7 @@
         else _cart[idx] = _cart[idx] with { Quantity = newQty };
     }
 
-    private void ClearCart() { _cart.Clear(); _error = null; }
+    private void ClearCart() => _cart.Clear();
 
     private async Task OnSearchKey(KeyboardEventArgs e)
     {
@@ -245,23 +220,30 @@
         await Task.CompletedTask;
     }
 
-    private void OpenTender()
+    private async Task OpenTender()
     {
-        _tenderAmount = Total;
-        _tenderMethod = "cash";
-        _showTender = true;
+        var parameters = new DialogParameters<TenderDialog>
+        {
+            { x => x.Total, Total },
+            { x => x.Currency, Currency }
+        };
+        var opts = new DialogOptions { FullWidth = true, MaxWidth = MaxWidth.ExtraSmall };
+        var dialog = await Dialogs.ShowAsync<TenderDialog>("Tender", parameters, opts);
+        var result = await dialog.Result;
+        if (result?.Canceled is false && result.Data is TenderDialog.TenderResult t)
+            await Commit(t.Method, t.Amount);
     }
 
-    private async Task Commit()
+    private async Task Commit(string method, decimal tendered)
     {
-        _busy = true; _error = null;
+        _busy = true;
         try
         {
             var req = new CreateSaleRequest(
                 ShopId: _shopId, RegisterId: _registerId, ShiftId: _shiftId, WarehouseId: _warehouseId,
                 CustomerId: null, Currency: Currency,
                 Items: _cart.Select(l => new SaleLineRequest(l.Product.Id, null, l.Quantity, l.UnitPrice, 0m)).ToList(),
-                Payments: new[] { new SalePaymentRequest(_tenderMethod, _tenderAmount, null) },
+                Payments: new[] { new SalePaymentRequest(method, tendered, null) },
                 Notes: null, ClientCompletedAt: DateTimeOffset.UtcNow);
 
             var idem = Guid.NewGuid().ToString("N");
@@ -270,39 +252,35 @@
             {
                 await Outbox.EnqueueAsync("sale", "create", req);
                 _pendingOutbox = await Outbox.PendingCountAsync();
-                _lastReceipt = new SaleSummary(Guid.NewGuid(), "OFFLINE-" + idem[..6],
-                    Subtotal, 0, EstimatedTax, Total, _tenderAmount, _tenderAmount - Total,
-                    "Queued", DateTimeOffset.UtcNow);
+                Snackbar.Add($"Sale queued offline · change {FormatMoney(tendered - Total, Currency)}", Severity.Info);
             }
             else
             {
                 var resp = await Api.CommitSaleAsync(req, idem);
                 if (!resp.IsSuccessStatusCode)
                 {
-                    _error = $"Server rejected sale: {(int)resp.StatusCode}";
+                    Snackbar.Add($"Server rejected sale ({(int)resp.StatusCode})", Severity.Error);
                     return;
                 }
-                _lastReceipt = await resp.Content.ReadFromJsonAsync<SaleSummary>();
+                var receipt = await resp.Content.ReadFromJsonAsync<SaleSummary>();
+                Snackbar.Add($"Sale {receipt?.Number} · change {FormatMoney(receipt?.Change ?? 0, Currency)}", Severity.Success);
             }
 
             _cart.Clear();
-            _showTender = false;
         }
-        catch (Exception ex) { _error = ex.Message; }
+        catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
         finally { _busy = false; }
     }
 
     private async Task Drain()
     {
-        var auth = Auth.Current; if (auth is null) return;
-        // device id: derive a stable per-tab id; in production persist this
         var deviceId = Guid.NewGuid();
-        await Outbox.DrainAsync(deviceId);
+        var n = await Outbox.DrainAsync(deviceId);
         _pendingOutbox = await Outbox.PendingCountAsync();
+        Snackbar.Add($"Synced {n} item(s)", Severity.Success);
     }
 
-    private static string FormatMoney(decimal amount, string currency) =>
-        $"{currency} {amount:0.00}";
+    private static string FormatMoney(decimal amount, string currency) => $"{currency} {amount:0.00}";
 
     public void Dispose() { }
 }

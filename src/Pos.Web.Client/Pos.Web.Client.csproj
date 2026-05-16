@@ -11,5 +11,6 @@
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.0" />
     <PackageReference Include="Microsoft.Authentication.WebAssembly.Msal" Version="9.0.0" />
     <PackageReference Include="Blazored.LocalStorage" Version="4.5.0" />
+    <PackageReference Include="MudBlazor" Version="7.15.0" />
   </ItemGroup>
 </Project>

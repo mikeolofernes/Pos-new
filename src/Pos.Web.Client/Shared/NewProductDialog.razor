@@ -1,0 +1,39 @@
+<MudDialog>
+    <DialogContent>
+        <MudTextField @bind-Value="_sku" Label="SKU" Variant="Variant.Outlined" Required="true" Class="mb-3" />
+        <MudTextField @bind-Value="_name" Label="Name" Variant="Variant.Outlined" Required="true" Class="mb-3" />
+        <MudGrid Spacing="2" Class="mb-3">
+            <MudItem xs="8">
+                <MudNumericField @bind-Value="_price" Label="Price" Variant="Variant.Outlined" Format="N2" Min="0" />
+            </MudItem>
+            <MudItem xs="4">
+                <MudTextField @bind-Value="_currency" Label="Currency" Variant="Variant.Outlined" />
+            </MudItem>
+        </MudGrid>
+        <MudTextField @bind-Value="_taxCode" Label="Tax code" Variant="Variant.Outlined" Class="mb-3" />
+        <MudSwitch @bind-Value="_trackInventory" Color="Color.Primary">Track inventory</MudSwitch>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    private string _sku = "";
+    private string _name = "";
+    private decimal _price;
+    private string _currency = "USD";
+    private string _taxCode = "standard";
+    private bool _trackInventory = true;
+
+    private void Cancel() => MudDialog.Cancel();
+    private void Submit()
+    {
+        if (string.IsNullOrWhiteSpace(_sku) || string.IsNullOrWhiteSpace(_name)) return;
+        MudDialog.Close(DialogResult.Ok(new CreateProductRequest(
+            _sku.Trim(), _name.Trim(), null, null, _price, _currency.Trim(), _taxCode.Trim(), _trackInventory)));
+    }
+}

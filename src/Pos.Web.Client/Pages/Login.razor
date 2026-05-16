@@ -1,42 +1,38 @@
 @page "/login"
-@layout Shared.AuthLayout
+@layout AuthLayout
 @inject ApiClient Api
 @inject AuthState Auth
 @inject NavigationManager Nav
+@inject ISnackbar Snackbar
 
-<div class="auth-card">
-    <h1 class="h3 mb-4">Sign in</h1>
+<MudPaper Class="auth-card pa-6" Elevation="6">
+    <MudText Typo="Typo.h5" GutterBottom="true">Sign in</MudText>
 
-    <EditForm Model="_model" OnValidSubmit="Submit">
-        <DataAnnotationsValidator />
+    <MudForm @ref="_form" Model="_model">
+        <MudTextField @bind-Value="_model.TenantSlug" Label="Tenant" Variant="Variant.Outlined"
+                      Required="true" RequiredError="Tenant is required"
+                      AutoFocus="true" Class="mb-3" />
 
-        <div class="mb-3">
-            <label class="form-label">Tenant</label>
-            <InputText class="form-control form-control-lg" @bind-Value="_model.TenantSlug" autocomplete="organization" />
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Email</label>
-            <InputText class="form-control form-control-lg" @bind-Value="_model.Email" type="email" autocomplete="username" />
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Password</label>
-            <InputText class="form-control form-control-lg" @bind-Value="_model.Password" type="password" autocomplete="current-password" />
-        </div>
+        <MudTextField @bind-Value="_model.Email" Label="Email" Variant="Variant.Outlined"
+                      InputType="InputType.Email" Required="true" RequiredError="Email is required"
+                      Class="mb-3" />
 
-        @if (_error is not null)
-        {
-            <div class="alert alert-danger py-2">@_error</div>
-        }
+        <MudTextField @bind-Value="_model.Password" Label="Password" Variant="Variant.Outlined"
+                      InputType="InputType.Password" Required="true" RequiredError="Password is required"
+                      Class="mb-3" />
 
-        <button class="btn btn-primary btn-lg w-100" type="submit" disabled="@_busy">
-            @(_busy ? "Signing in…" : "Sign in")
-        </button>
-    </EditForm>
+        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary"
+                   Size="Size.Large" FullWidth="true" Disabled="@_busy"
+                   OnClick="Submit">
+            @if (_busy) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="me-2" /> }
+            Sign in
+        </MudButton>
+    </MudForm>
 
-    <p class="small text-muted mt-3 mb-0">
+    <MudText Typo="Typo.caption" Class="mt-4 d-block">
         Dev seed: <code>demo</code> / <code>admin@@demo.local</code> / <code>Passw0rd!</code>
-    </p>
-</div>
+    </MudText>
+</MudPaper>
 
 @code {
     private sealed class Model
@@ -47,20 +43,22 @@
     }
 
     private readonly Model _model = new();
+    private MudForm? _form;
     private bool _busy;
-    private string? _error;
 
     private async Task Submit()
     {
-        _busy = true; _error = null;
+        if (_form is not null) { await _form.Validate(); if (!_form.IsValid) return; }
+        _busy = true;
         try
         {
             var resp = await Api.LoginAsync(new LoginRequest(_model.TenantSlug, _model.Email, _model.Password, "browser"));
-            if (resp is null) { _error = "Invalid credentials"; return; }
+            if (resp is null) { Snackbar.Add("Invalid credentials", Severity.Error); return; }
             await Auth.SetAsync(resp);
+            Snackbar.Add($"Welcome, {resp.DisplayName}", Severity.Success);
             Nav.NavigateTo("/pos");
         }
-        catch (Exception ex) { _error = ex.Message; }
+        catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
         finally { _busy = false; }
     }
 }

@@ -2,71 +2,43 @@
 @inject ApiClient Api
 @inject AuthState Auth
 @inject NavigationManager Nav
+@inject IDialogService Dialogs
+@inject ISnackbar Snackbar
 
 <PageTitle>Inventory</PageTitle>
 
-<div class="page-head">
-    <h1 class="h3">Inventory</h1>
-</div>
+<MudText Typo="Typo.h5" Class="mb-3">Inventory</MudText>
 
-<div class="row g-2 mb-3">
-    <div class="col">
-        <input class="form-control" placeholder="Search products…" @bind="_search" @bind:event="oninput" @bind:after="Reload" />
-    </div>
-</div>
+<MudTextField @bind-Value="_search" @bind-Value:after="Reload"
+              Immediate="true" DebounceInterval="300"
+              Placeholder="Search products…"
+              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+              Variant="Variant.Outlined" Margin="Margin.Dense"
+              Class="mb-3" />
 
-@if (_loading)
-{
-    <div>Loading…</div>
-}
-else
-{
-    <div class="table-responsive">
-        <table class="table align-middle">
-            <thead class="table-light">
-                <tr><th>SKU</th><th>Name</th><th class="text-end">On hand</th><th class="text-end">Avg cost</th><th></th></tr>
-            </thead>
-            <tbody>
-                @foreach (var row in _rows)
-                {
-                    <tr>
-                        <td><code>@row.Product.Sku</code></td>
-                        <td>@row.Product.Name</td>
-                        <td class="text-end">@row.OnHand.ToString("0.###")</td>
-                        <td class="text-end">@row.AverageCost.ToString("0.00")</td>
-                        <td class="text-end">
-                            <button class="btn btn-sm btn-outline-secondary"
-                                    disabled="@(!Auth.Has("inventory.write"))"
-                                    @onclick="() => StartAdjust(row.Product)">Adjust</button>
-                        </td>
-                    </tr>
-                }
-                @if (_rows.Count == 0)
-                {
-                    <tr><td colspan="5" class="text-muted text-center py-4">No items.</td></tr>
-                }
-            </tbody>
-        </table>
-    </div>
-}
-
-@if (_adjusting is not null)
-{
-    <div class="modal-overlay" @onclick="() => _adjusting = null">
-        <div class="modal-card" @onclick:stopPropagation>
-            <h3 class="h5">Adjust @_adjusting.Name</h3>
-            <div class="mb-2"><label class="form-label">Quantity delta (negative to reduce)</label>
-                <input type="number" step="0.001" class="form-control" @bind="_delta" /></div>
-            <div class="mb-3"><label class="form-label">Unit cost</label>
-                <input type="number" step="0.01" class="form-control" @bind="_cost" /></div>
-            @if (_adjustError is not null) { <div class="alert alert-danger py-2">@_adjustError</div> }
-            <div class="d-flex gap-2">
-                <button class="btn btn-outline-secondary flex-fill" @onclick="() => _adjusting = null">Cancel</button>
-                <button class="btn btn-primary flex-fill" @onclick="Commit">Apply</button>
-            </div>
-        </div>
-    </div>
-}
+<MudTable Items="_rows" Loading="_loading" Hover="true" Dense="true"
+          Breakpoint="Breakpoint.Sm" Class="mud-elevation-1">
+    <HeaderContent>
+        <MudTh>SKU</MudTh>
+        <MudTh>Name</MudTh>
+        <MudTh Style="text-align:right">On hand</MudTh>
+        <MudTh Style="text-align:right">Avg cost</MudTh>
+        <MudTh />
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="SKU"><code>@context.Product.Sku</code></MudTd>
+        <MudTd DataLabel="Name">@context.Product.Name</MudTd>
+        <MudTd DataLabel="On hand" Style="text-align:right">@context.OnHand.ToString("0.###")</MudTd>
+        <MudTd DataLabel="Avg cost" Style="text-align:right">@context.AverageCost.ToString("0.00")</MudTd>
+        <MudTd Style="text-align:right">
+            <MudButton Size="Size.Small" Variant="Variant.Outlined"
+                       StartIcon="@Icons.Material.Filled.Tune"
+                       Disabled="@(!Auth.Has("inventory.write"))"
+                       OnClick="@(() => StartAdjust(context.Product))">Adjust</MudButton>
+        </MudTd>
+    </RowTemplate>
+    <NoRecordsContent><MudText>No items.</MudText></NoRecordsContent>
+</MudTable>
 
 @code {
     private sealed record Row(ProductDto Product, decimal OnHand, decimal AverageCost);
@@ -74,10 +46,6 @@ else
     private List<Row> _rows = new();
     private bool _loading = true;
     private string _search = "";
-    private ProductDto? _adjusting;
-    private decimal _delta;
-    private decimal _cost;
-    private string? _adjustError;
     private Guid _shopId, _warehouseId;
 
     protected override async Task OnInitializedAsync()
@@ -105,21 +73,27 @@ else
         _loading = false;
     }
 
-    private void StartAdjust(ProductDto p) { _adjusting = p; _delta = 0; _cost = 0; _adjustError = null; }
-
-    private async Task Commit()
+    private async Task StartAdjust(ProductDto p)
     {
-        if (_adjusting is null) return;
-        _adjustError = null;
-        try
+        var parameters = new DialogParameters<AdjustStockDialog>
+        {
+            { x => x.ProductName, p.Name }
+        };
+        var dialog = await Dialogs.ShowAsync<AdjustStockDialog>("Adjust stock", parameters,
+            new DialogOptions { FullWidth = true, MaxWidth = MaxWidth.ExtraSmall });
+        var result = await dialog.Result;
+        if (result?.Canceled is false && result.Data is AdjustStockDialog.AdjustResult a)
         {
             var idem = Guid.NewGuid().ToString("N");
             var resp = await Api.AdjustStockAsync(new AdjustStockRequest(
-                _shopId, _warehouseId, _adjusting.Id, null, _delta, _cost, "Manual"), idem);
-            if (!resp.IsSuccessStatusCode) { _adjustError = $"Server rejected ({(int)resp.StatusCode})"; return; }
-            _adjusting = null;
+                _shopId, _warehouseId, p.Id, null, a.Delta, a.UnitCost, a.Reason), idem);
+            if (!resp.IsSuccessStatusCode)
+            {
+                Snackbar.Add($"Server rejected ({(int)resp.StatusCode})", Severity.Error);
+                return;
+            }
+            Snackbar.Add("Stock adjusted", Severity.Success);
             await Reload();
         }
-        catch (Exception ex) { _adjustError = ex.Message; }
     }
 }

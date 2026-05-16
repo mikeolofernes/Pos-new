@@ -1,0 +1,47 @@
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.h6" Class="mb-3">@FormatMoney(Total, Currency)</MudText>
+
+        <MudSelect T="string" @bind-Value="_method" Label="Method" Variant="Variant.Outlined" Class="mb-3">
+            <MudSelectItem Value="@("cash")">Cash</MudSelectItem>
+            <MudSelectItem Value="@("card")">Card</MudSelectItem>
+            <MudSelectItem Value="@("wallet")">Wallet</MudSelectItem>
+        </MudSelect>
+
+        <MudNumericField @bind-Value="_amount" Label="Amount tendered" Variant="Variant.Outlined"
+                         Format="N2" Step="1m" Min="0" Class="mb-3" />
+
+        <div class="d-flex justify-content-between mt-2">
+            <MudText>Change due</MudText>
+            <MudText Typo="Typo.subtitle1">@FormatMoney(Math.Max(0, _amount - Total), Currency)</MudText>
+        </div>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled"
+                   Disabled="@(_amount < Total)" OnClick="Submit">
+            Complete
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public decimal Total { get; set; }
+    [Parameter] public string Currency { get; set; } = "USD";
+
+    private string _method = "cash";
+    private decimal _amount;
+
+    public sealed record TenderResult(string Method, decimal Amount);
+
+    protected override void OnInitialized() => _amount = Total;
+
+    private void Cancel() => MudDialog.Cancel();
+    private void Submit() => MudDialog.Close(DialogResult.Ok(new TenderResult(_method, _amount)));
+
+    private static string FormatMoney(decimal amount, string currency) => $"{currency} {amount:0.00}";
+}

@@ -1,13 +1,8 @@
 @inject AuthState Auth
 
-<nav class="nav flex-column app-navmenu">
-    <NavLink class="nav-link" href="/pos" Match="NavLinkMatch.Prefix" @onclick="OnClick">🧾 POS</NavLink>
-    <NavLink class="nav-link" href="/products" Match="NavLinkMatch.Prefix" @onclick="OnClick">📦 Products</NavLink>
-    <NavLink class="nav-link" href="/inventory" Match="NavLinkMatch.Prefix" @onclick="OnClick">🏷️ Inventory</NavLink>
-    <NavLink class="nav-link" href="/shifts" Match="NavLinkMatch.Prefix" @onclick="OnClick">⏱️ Shifts</NavLink>
-</nav>
-
-@code {
-    [Parameter] public EventCallback OnNavigated { get; set; }
-    private Task OnClick() => OnNavigated.HasDelegate ? OnNavigated.InvokeAsync() : Task.CompletedTask;
-}
+<MudNavMenu Class="pt-2">
+    <MudNavLink Href="/pos"       Icon="@Icons.Material.Filled.PointOfSale"   Match="NavLinkMatch.Prefix">POS</MudNavLink>
+    <MudNavLink Href="/products"  Icon="@Icons.Material.Filled.Inventory2"    Match="NavLinkMatch.Prefix">Products</MudNavLink>
+    <MudNavLink Href="/inventory" Icon="@Icons.Material.Filled.Warehouse"     Match="NavLinkMatch.Prefix">Inventory</MudNavLink>
+    <MudNavLink Href="/shifts"    Icon="@Icons.Material.Filled.AccessTime"    Match="NavLinkMatch.Prefix">Shifts</MudNavLink>
+</MudNavMenu>

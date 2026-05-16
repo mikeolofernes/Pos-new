@@ -2,47 +2,72 @@
 @inject AuthState Auth
 @inject NavigationManager Nav
 
-<div class="app-shell">
-    @if (Auth.IsAuthenticated)
-    {
-        <aside class="app-nav d-none d-md-flex flex-column">
-            <div class="app-brand">POS</div>
+<MudThemeProvider Theme="_theme" IsDarkMode="false" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+@if (Auth.IsAuthenticated)
+{
+    <MudLayout>
+        <MudAppBar Elevation="1" Color="Color.Dark" Dense="true">
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit"
+                           OnClick="@(() => _drawerOpen = !_drawerOpen)" Edge="Edge.Start" />
+            <MudText Typo="Typo.h6" Class="ms-2">POS</MudText>
+            <MudSpacer />
+            @if (_offline)
+            {
+                <MudChip T="string" Color="Color.Warning" Size="Size.Small" Icon="@Icons.Material.Filled.CloudOff">Offline</MudChip>
+            }
+            <MudText Typo="Typo.body2" Class="ms-3 d-none d-sm-inline">@Auth.Current?.DisplayName</MudText>
+            <MudIconButton Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit" OnClick="Logout" />
+        </MudAppBar>
+
+        <MudDrawer @bind-Open="_drawerOpen" Elevation="2" ClipMode="DrawerClipMode.Always" Variant="@DrawerVariant.Mini" OpenMiniOnHover="true">
             <NavMenu />
-            <div class="mt-auto p-3 small text-muted">
-                <div class="fw-bold">@Auth.Current?.DisplayName</div>
-                <a href="#" @onclick:preventDefault @onclick="Logout">Sign out</a>
-            </div>
-        </aside>
-        <header class="app-topbar d-md-none">
-            <button class="btn btn-link text-white" @onclick="ToggleMobile" aria-label="Menu">☰</button>
-            <span class="app-brand-sm">POS</span>
-            <span class="ms-auto small">@Auth.Current?.DisplayName</span>
-        </header>
-        @if (_mobileOpen)
-        {
-            <div class="mobile-drawer d-md-none" @onclick="ToggleMobile">
-                <div class="mobile-drawer-inner" @onclick:stopPropagation>
-                    <NavMenu OnNavigated="ToggleMobile" />
-                    <a class="d-block p-3" href="#" @onclick:preventDefault @onclick="Logout">Sign out</a>
-                </div>
-            </div>
-        }
-    }
-    <main class="app-main">
-        @Body
-    </main>
-</div>
+        </MudDrawer>
+
+        <MudMainContent Class="pa-3 pa-md-4">
+            @Body
+        </MudMainContent>
+    </MudLayout>
+}
+else
+{
+    @Body
+}
 
 @code {
-    private bool _mobileOpen;
+    private bool _drawerOpen = true;
+    private bool _offline;
+
+    private readonly MudTheme _theme = new()
+    {
+        PaletteLight = new PaletteLight
+        {
+            Primary = "#2563EB",
+            Secondary = "#0EA5E9",
+            AppbarBackground = "#0F172A",
+            DrawerBackground = "#0F172A",
+            DrawerText = "#E2E8F0",
+            DrawerIcon = "#E2E8F0",
+            Background = "#F5F7FB",
+            Surface = "#FFFFFF",
+            TextPrimary = "#0F172A",
+            TextSecondary = "#475569"
+        },
+        Typography = new Typography
+        {
+            Default = new DefaultTypography { FontFamily = new[] { "Roboto", "-apple-system", "Segoe UI", "sans-serif" } }
+        },
+        LayoutProperties = new LayoutProperties { DefaultBorderRadius = "10px" }
+    };
 
     protected override async Task OnInitializedAsync()
     {
         Auth.Changed += StateHasChanged;
         await Auth.LoadAsync();
     }
-
-    private void ToggleMobile() => _mobileOpen = !_mobileOpen;
 
     private async Task Logout()
     {
