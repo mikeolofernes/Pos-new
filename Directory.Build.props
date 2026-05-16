@@ -22,6 +22,6 @@
         CA1812 - Avoid uninstantiated internal classes (false-positive on DI-registered types).
         CA1819 - Properties should not return arrays (DTOs use string[] for permissions).
     -->
-    <WarningsNotAsErrors>CA1000;CA1716;CA1707;CA2007;CA1031;CA1062;CA1812;CA1819;CA1725;CA1816;CA1305;CA1848;CA1873;CA1304;CA1311;CA1822;CA1054;CA1056;CA2234</WarningsNotAsErrors>
+    <WarningsNotAsErrors>CA1000;CA1716;CA1707;CA2007;CA1031;CA1062;CA1812;CA1819;CA1725;CA1816;CA1305;CA1848;CA1873;CA1304;CA1311;CA1822;CA1054;CA1056;CA2234;CA1862</WarningsNotAsErrors>
   </PropertyGroup>
 </Project>

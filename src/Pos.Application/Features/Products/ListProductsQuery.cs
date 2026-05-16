@@ -20,10 +20,12 @@ public class ListProductsHandler : IRequestHandler<ListProductsQuery, Page<Produ
         var query = _db.Products.AsNoTracking().Where(p => p.DeletedAt == null);
         if (!string.IsNullOrWhiteSpace(req.Q))
         {
-            // EF Core 9 + Npgsql translates ToLower + Contains to a case-insensitive
-            // LIKE / ILIKE depending on collation. Keeps Pos.Application provider-agnostic.
-            var q = req.Q.Trim().ToLowerInvariant();
-            query = query.Where(p => p.Name.ToLower().Contains(q) || p.Sku.ToLower().Contains(q));
+            // EF Core translates string.Contains to SQL LIKE. Case-sensitivity
+            // depends on the database collation. Keep it simple here; if you
+            // want guaranteed case-insensitive search add EF.Functions.ILike
+            // (Npgsql) inside Infrastructure-specific helpers.
+            var q = req.Q.Trim();
+            query = query.Where(p => p.Name.Contains(q) || p.Sku.Contains(q));
         }
 
         var total = await query.CountAsync(ct);
