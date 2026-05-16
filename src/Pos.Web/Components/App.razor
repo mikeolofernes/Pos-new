@@ -17,8 +17,8 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
     <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
 
-    <!-- App styles (Bootstrap utility overrides for POS layout) -->
-    <link rel="stylesheet" href="_content/Pos.Web.Client/css/app.css" />
+    <!-- App styles served from the client's wwwroot, merged at root by the host -->
+    <link rel="stylesheet" href="css/app.css" />
     <link href="Pos.Web.Client.styles.css" rel="stylesheet" />
     <HeadOutlet @rendermode="@WasmNoPrerender" />
 </head>
