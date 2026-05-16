@@ -51,6 +51,11 @@ public class AppDbContext : DbContext, IAppDbContext
 
         foreach (var et in mb.Model.GetEntityTypes())
         {
+            // Skip optimistic-concurrency column for now — PG 'xmin' is a system column
+            // and can't be written as a user column. Re-enable later via UseXminAsConcurrencyToken().
+            if (et.ClrType.GetProperty("Xmin") is not null)
+                mb.Entity(et.ClrType).Ignore("Xmin");
+
             // Soft-delete + tenant filter
             var clrType = et.ClrType;
             var isTenantOwned = typeof(ITenantEntity).IsAssignableFrom(clrType);

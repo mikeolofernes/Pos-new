@@ -13,7 +13,6 @@ public class CategoryConfig : IEntityTypeConfiguration<Category>
         e.HasIndex(x => new { x.TenantId, x.Slug }).IsUnique();
         e.Property(x => x.Name).HasMaxLength(128).IsRequired();
         e.Property(x => x.Slug).HasMaxLength(128).IsRequired();
-        e.Property(x => x.Xmin).IsRowVersion().HasColumnName("xmin").HasColumnType("xid");
     }
 }
 
@@ -34,7 +33,6 @@ public class ProductConfig : IEntityTypeConfiguration<Product>
         e.Property(x => x.DefaultPriceCurrency).HasMaxLength(3).IsRequired();
         e.Property(x => x.DefaultCost).HasColumnType("numeric(19,4)");
         e.Property(x => x.TaxCode).HasMaxLength(32).IsRequired();
-        e.Property(x => x.Xmin).IsRowVersion().HasColumnName("xmin").HasColumnType("xid");
     }
 }
 
