@@ -28,7 +28,7 @@
 </MudDialog>
 
 @code {
-    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+    [CascadingParameter] private MudDialogInstance MudDialog { get; set; } = default!;
 
     [Parameter] public decimal Total { get; set; }
     [Parameter] public string Currency { get; set; } = "USD";
