@@ -1,0 +1,61 @@
+@using Pos.Shared.Contracts
+
+<MudDialog>
+    <DialogContent>
+        <MudTextField @bind-Value="_email" Label="Email" Variant="Variant.Outlined"
+                      Required="true" Disabled="@(_isEdit)" Class="mb-3" />
+        <MudTextField @bind-Value="_displayName" Label="Display name" Variant="Variant.Outlined" Required="true" Class="mb-3" />
+        <MudTextField @bind-Value="_phone" Label="Phone" Variant="Variant.Outlined" Class="mb-3" />
+        <MudTextField @bind-Value="_password"
+                      Label="@(_isEdit ? "New password (leave blank to keep)" : "Password")"
+                      Variant="Variant.Outlined" InputType="InputType.Password" Class="mb-3" />
+        <MudSwitch @bind-Value="_isActive" Color="Color.Success">Active</MudSwitch>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private MudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public UserDto? Existing { get; set; }
+
+    private bool _isEdit;
+    private string _email = "";
+    private string _displayName = "";
+    private string? _phone;
+    private string _password = "";
+    private bool _isActive = true;
+
+    protected override void OnInitialized()
+    {
+        if (Existing is not null)
+        {
+            _isEdit = true;
+            _email = Existing.Email;
+            _displayName = Existing.DisplayName;
+            _phone = Existing.Phone;
+            _isActive = Existing.IsActive;
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private void Submit()
+    {
+        if (string.IsNullOrWhiteSpace(_displayName)) return;
+        if (_isEdit)
+        {
+            MudDialog.Close(DialogResult.Ok(new UpdateUserRequest(
+                _displayName.Trim(), _phone, _isActive,
+                string.IsNullOrWhiteSpace(_password) ? null : _password)));
+        }
+        else
+        {
+            if (string.IsNullOrWhiteSpace(_email) || string.IsNullOrWhiteSpace(_password)) return;
+            MudDialog.Close(DialogResult.Ok(new CreateUserRequest(
+                _email.Trim(), _displayName.Trim(), _phone, _password, _isActive)));
+        }
+    }
+}

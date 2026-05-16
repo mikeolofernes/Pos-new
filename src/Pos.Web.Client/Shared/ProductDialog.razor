@@ -1,0 +1,82 @@
+@using Pos.Shared.Contracts
+
+<MudDialog>
+    <DialogContent>
+        <MudTextField @bind-Value="_sku" Label="SKU" Variant="Variant.Outlined"
+                      Required="true" Disabled="@(_isEdit)" Class="mb-3" />
+        <MudTextField @bind-Value="_name" Label="Name" Variant="Variant.Outlined" Required="true" Class="mb-3" />
+        <MudTextField @bind-Value="_description" Label="Description" Variant="Variant.Outlined"
+                      Lines="2" Class="mb-3" />
+        <MudGrid Spacing="2" Class="mb-3">
+            <MudItem xs="8">
+                <MudNumericField @bind-Value="_price" Label="Price" Variant="Variant.Outlined" Format="N2" Min="0" />
+            </MudItem>
+            <MudItem xs="4">
+                <MudTextField @bind-Value="_currency" Label="Currency" Variant="Variant.Outlined" />
+            </MudItem>
+        </MudGrid>
+        <MudTextField @bind-Value="_taxCode" Label="Tax code" Variant="Variant.Outlined" Class="mb-3" />
+        <MudStack Row="true" Spacing="3">
+            <MudSwitch @bind-Value="_trackInventory" Color="Color.Primary">Track inventory</MudSwitch>
+            @if (_isEdit)
+            {
+                <MudSwitch @bind-Value="_isActive" Color="Color.Success">Active</MudSwitch>
+            }
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private MudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public ProductDto? Existing { get; set; }
+
+    private bool _isEdit;
+    private string _sku = "";
+    private string _name = "";
+    private string? _description;
+    private decimal _price;
+    private string _currency = "USD";
+    private string _taxCode = "standard";
+    private bool _trackInventory = true;
+    private bool _isActive = true;
+
+    protected override void OnInitialized()
+    {
+        if (Existing is not null)
+        {
+            _isEdit = true;
+            _sku = Existing.Sku;
+            _name = Existing.Name;
+            _description = Existing.Description;
+            _price = Existing.Price;
+            _currency = Existing.Currency;
+            _taxCode = Existing.TaxCode;
+            _trackInventory = Existing.TrackInventory;
+            _isActive = Existing.IsActive;
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private void Submit()
+    {
+        if (string.IsNullOrWhiteSpace(_name)) return;
+        if (_isEdit)
+        {
+            MudDialog.Close(DialogResult.Ok(new UpdateProductRequest(
+                _name.Trim(), _description, null, _price, _currency.Trim(),
+                _taxCode.Trim(), _trackInventory, _isActive)));
+        }
+        else
+        {
+            if (string.IsNullOrWhiteSpace(_sku)) return;
+            MudDialog.Close(DialogResult.Ok(new CreateProductRequest(
+                _sku.Trim(), _name.Trim(), _description, null,
+                _price, _currency.Trim(), _taxCode.Trim(), _trackInventory)));
+        }
+    }
+}

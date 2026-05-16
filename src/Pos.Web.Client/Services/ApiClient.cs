@@ -18,10 +18,63 @@ public class ApiClient
         return await r.Content.ReadFromJsonAsync<LoginResponse>(cancellationToken: ct);
     }
 
+    // ---- Tenants ----
+    public async Task<IReadOnlyList<TenantDto>> ListTenantsAsync(CancellationToken ct = default) =>
+        await _http.GetFromJsonAsync<IReadOnlyList<TenantDto>>("/api/v1/tenants", ct)
+            ?? Array.Empty<TenantDto>();
+
+    public async Task<TenantDto?> CreateTenantAsync(CreateTenantRequest body, CancellationToken ct = default)
+    {
+        var r = await _http.PostAsJsonAsync("/api/v1/tenants", body, ct);
+        if (!r.IsSuccessStatusCode) return null;
+        return await r.Content.ReadFromJsonAsync<TenantDto>(cancellationToken: ct);
+    }
+
     // ---- Shops ----
     public async Task<IReadOnlyList<ShopDto>> ListShopsAsync(CancellationToken ct = default) =>
         await _http.GetFromJsonAsync<IReadOnlyList<ShopDto>>("/api/v1/shops", ct)
             ?? Array.Empty<ShopDto>();
+
+    public async Task<ShopDto?> CreateShopAsync(CreateShopRequest body, CancellationToken ct = default)
+    {
+        var r = await _http.PostAsJsonAsync("/api/v1/shops", body, ct);
+        if (!r.IsSuccessStatusCode) return null;
+        return await r.Content.ReadFromJsonAsync<ShopDto>(cancellationToken: ct);
+    }
+
+    public async Task<ShopDto?> UpdateShopAsync(Guid id, UpdateShopRequest body, CancellationToken ct = default)
+    {
+        var r = await _http.PutAsJsonAsync($"/api/v1/shops/{id}", body, ct);
+        if (!r.IsSuccessStatusCode) return null;
+        return await r.Content.ReadFromJsonAsync<ShopDto>(cancellationToken: ct);
+    }
+
+    public async Task<bool> DeleteShopAsync(Guid id, CancellationToken ct = default) =>
+        (await _http.DeleteAsync($"/api/v1/shops/{id}", ct)).IsSuccessStatusCode;
+
+    // ---- Users ----
+    public async Task<IReadOnlyList<UserDto>> ListUsersAsync(string? q = null, CancellationToken ct = default)
+    {
+        var url = "/api/v1/users" + (string.IsNullOrWhiteSpace(q) ? "" : $"?q={Uri.EscapeDataString(q)}");
+        return await _http.GetFromJsonAsync<IReadOnlyList<UserDto>>(url, ct) ?? Array.Empty<UserDto>();
+    }
+
+    public async Task<UserDto?> CreateUserAsync(CreateUserRequest body, CancellationToken ct = default)
+    {
+        var r = await _http.PostAsJsonAsync("/api/v1/users", body, ct);
+        if (!r.IsSuccessStatusCode) return null;
+        return await r.Content.ReadFromJsonAsync<UserDto>(cancellationToken: ct);
+    }
+
+    public async Task<UserDto?> UpdateUserAsync(Guid id, UpdateUserRequest body, CancellationToken ct = default)
+    {
+        var r = await _http.PutAsJsonAsync($"/api/v1/users/{id}", body, ct);
+        if (!r.IsSuccessStatusCode) return null;
+        return await r.Content.ReadFromJsonAsync<UserDto>(cancellationToken: ct);
+    }
+
+    public async Task<bool> DeleteUserAsync(Guid id, CancellationToken ct = default) =>
+        (await _http.DeleteAsync($"/api/v1/users/{id}", ct)).IsSuccessStatusCode;
 
     // ---- Products ----
     public async Task<PageOf<ProductDto>?> ListProductsAsync(string? q = null, int page = 1, int pageSize = 100, CancellationToken ct = default)
@@ -37,6 +90,16 @@ public class ApiClient
         if (!r.IsSuccessStatusCode) return null;
         return await r.Content.ReadFromJsonAsync<ProductDto>(cancellationToken: ct);
     }
+
+    public async Task<ProductDto?> UpdateProductAsync(Guid id, UpdateProductRequest body, CancellationToken ct = default)
+    {
+        var r = await _http.PutAsJsonAsync($"/api/v1/products/{id}", body, ct);
+        if (!r.IsSuccessStatusCode) return null;
+        return await r.Content.ReadFromJsonAsync<ProductDto>(cancellationToken: ct);
+    }
+
+    public async Task<bool> DeleteProductAsync(Guid id, CancellationToken ct = default) =>
+        (await _http.DeleteAsync($"/api/v1/products/{id}", ct)).IsSuccessStatusCode;
 
     // ---- Inventory ----
     public async Task<IReadOnlyList<BalanceDto>> GetBalanceAsync(Guid productId, CancellationToken ct = default) =>

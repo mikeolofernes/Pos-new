@@ -1,3 +1,9 @@
+/* Force MudMainContent to clear the fixed AppBar. Bootstrap's CSS reset can
+   stomp on MudBlazor's --mud-appbar-height var; explicit padding is safest. */
+.mud-main-content {
+    padding-top: 64px !important;
+}
+
 /* Auth shell (login) */
 .auth-shell {
     min-height: 100dvh;

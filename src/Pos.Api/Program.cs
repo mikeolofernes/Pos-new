@@ -138,7 +138,9 @@ app.MapHealthChecks("/health/ready");
 
 // ---- API
 app.MapAuthEndpoints();
+app.MapTenantEndpoints();
 app.MapShopEndpoints();
+app.MapUserEndpoints();
 app.MapProductEndpoints();
 app.MapInventoryEndpoints();
 app.MapPosEndpoints();

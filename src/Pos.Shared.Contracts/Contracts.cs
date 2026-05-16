@@ -10,8 +10,34 @@ public sealed record LoginResponse(
 
 public sealed record RefreshRequest(string RefreshToken);
 
+// ---- Tenants ----
+public sealed record TenantDto(
+    Guid Id, string Slug, string Name, string CountryCode, string DefaultCurrency,
+    string TimeZoneId, string Status, DateTimeOffset CreatedAt);
+
+public sealed record CreateTenantRequest(
+    string Slug, string Name, string CountryCode, string DefaultCurrency, string TimeZoneId,
+    string AdminEmail, string AdminDisplayName, string AdminPassword);
+
 // ---- Shops ----
 public sealed record ShopDto(Guid Id, string Code, string Name, string Currency, string TimeZoneId, bool IsActive);
+
+public sealed record CreateShopRequest(
+    string Code, string Name, string Currency, string TimeZoneId, string CountryCode);
+
+public sealed record UpdateShopRequest(
+    string Code, string Name, string Currency, string TimeZoneId, string CountryCode, bool IsActive);
+
+// ---- Users ----
+public sealed record UserDto(
+    Guid Id, string Email, string DisplayName, string? Phone, bool IsActive,
+    DateTimeOffset? LastLoginAt, DateTimeOffset CreatedAt);
+
+public sealed record CreateUserRequest(
+    string Email, string DisplayName, string? Phone, string Password, bool IsActive);
+
+public sealed record UpdateUserRequest(
+    string DisplayName, string? Phone, bool IsActive, string? NewPassword);
 
 // ---- Products ----
 public sealed record ProductDto(
@@ -21,6 +47,10 @@ public sealed record ProductDto(
 public sealed record CreateProductRequest(
     string Sku, string Name, string? Description, Guid? CategoryId,
     decimal Price, string Currency, string TaxCode, bool TrackInventory);
+
+public sealed record UpdateProductRequest(
+    string Name, string? Description, Guid? CategoryId,
+    decimal Price, string Currency, string TaxCode, bool TrackInventory, bool IsActive);
 
 public sealed record PageOf<T>(IReadOnlyList<T> Items, int Total, int PageNumber, int PageSize);
 

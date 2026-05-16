@@ -1,0 +1,75 @@
+@page "/tenants"
+@inject ApiClient Api
+@inject AuthState Auth
+@inject NavigationManager Nav
+@inject IDialogService Dialogs
+@inject ISnackbar Snackbar
+
+<PageTitle>Tenants</PageTitle>
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3">
+    <MudText Typo="Typo.h5">Tenants</MudText>
+    <MudSpacer />
+    <MudButton StartIcon="@Icons.Material.Filled.Add"
+               Variant="Variant.Filled" Color="Color.Primary"
+               OnClick="OpenCreate">New tenant</MudButton>
+</MudStack>
+
+<MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-3" Dense="true">
+    Tenants are top-level organisations. Creating one provisions an admin user
+    who can then log in with the new tenant slug.
+</MudAlert>
+
+<MudTable Items="_items" Loading="_loading" Hover="true" Dense="true"
+          Breakpoint="Breakpoint.Sm" Class="mud-elevation-1">
+    <HeaderContent>
+        <MudTh>Slug</MudTh>
+        <MudTh>Name</MudTh>
+        <MudTh>Country</MudTh>
+        <MudTh>Currency</MudTh>
+        <MudTh>Status</MudTh>
+        <MudTh>Created</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Slug"><code>@context.Slug</code></MudTd>
+        <MudTd DataLabel="Name">@context.Name</MudTd>
+        <MudTd DataLabel="Country">@context.CountryCode</MudTd>
+        <MudTd DataLabel="Currency">@context.DefaultCurrency</MudTd>
+        <MudTd DataLabel="Status">@context.Status</MudTd>
+        <MudTd DataLabel="Created">@context.CreatedAt.LocalDateTime.ToString("g")</MudTd>
+    </RowTemplate>
+    <NoRecordsContent><MudText>No tenants.</MudText></NoRecordsContent>
+</MudTable>
+
+@code {
+    private List<TenantDto> _items = new();
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Auth.LoadAsync();
+        if (!Auth.IsAuthenticated) { Nav.NavigateTo("/login", true); return; }
+        await Reload();
+    }
+
+    private async Task Reload()
+    {
+        _loading = true;
+        _items = (await Api.ListTenantsAsync()).ToList();
+        _loading = false;
+    }
+
+    private async Task OpenCreate()
+    {
+        var dialog = await Dialogs.ShowAsync<TenantDialog>("New tenant",
+            new DialogOptions { FullWidth = true, MaxWidth = MaxWidth.Small });
+        var result = await dialog.Result;
+        if (result?.Canceled is false && result.Data is CreateTenantRequest body)
+        {
+            var t = await Api.CreateTenantAsync(body);
+            if (t is null) { Snackbar.Add("Could not create tenant (duplicate slug?)", Severity.Error); return; }
+            Snackbar.Add($"Created tenant {t.Slug}", Severity.Success);
+            await Reload();
+        }
+    }
+}

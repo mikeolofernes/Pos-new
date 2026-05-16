@@ -20,6 +20,14 @@ public static class ProductEndpoints
                 .ToHttp(p => Results.Created($"/api/v1/products/{p.Id}", p)))
          .RequireAuthorization(Permissions.ProductsWrite);
 
+        g.MapPut("/{id:guid}", async (Guid id, UpdateProductRequest body, ISender sender, CancellationToken ct) =>
+            (await sender.Send(new UpdateProductCommand(id, body), ct)).ToHttp())
+         .RequireAuthorization(Permissions.ProductsWrite);
+
+        g.MapDelete("/{id:guid}", async (Guid id, ISender sender, CancellationToken ct) =>
+            (await sender.Send(new DeleteProductCommand(id), ct)).ToHttp())
+         .RequireAuthorization(Permissions.ProductsWrite);
+
         return app;
     }
 }

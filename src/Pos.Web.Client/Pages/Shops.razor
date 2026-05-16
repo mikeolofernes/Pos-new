@@ -1,43 +1,36 @@
-@page "/products"
+@page "/shops"
 @inject ApiClient Api
 @inject AuthState Auth
 @inject NavigationManager Nav
 @inject IDialogService Dialogs
 @inject ISnackbar Snackbar
 
-<PageTitle>Products</PageTitle>
+<PageTitle>Shops</PageTitle>
 
 <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3">
-    <MudText Typo="Typo.h5">Products</MudText>
+    <MudText Typo="Typo.h5">Shops</MudText>
     <MudSpacer />
     <MudButton StartIcon="@Icons.Material.Filled.Add"
                Variant="Variant.Filled" Color="Color.Primary"
-               Disabled="@(!Auth.Has("products.write"))"
-               OnClick="OpenCreate">New</MudButton>
+               Disabled="@(!Auth.Has("shops.write"))"
+               OnClick="OpenCreate">New shop</MudButton>
 </MudStack>
-
-<MudTextField @bind-Value="_search" @bind-Value:after="Reload"
-              Immediate="true" DebounceInterval="300"
-              Placeholder="Search by name or SKU…"
-              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
-              Variant="Variant.Outlined" Margin="Margin.Dense"
-              Class="mb-3" />
 
 <MudTable Items="_items" Loading="_loading" Hover="true" Dense="true"
           Breakpoint="Breakpoint.Sm" Class="mud-elevation-1">
     <HeaderContent>
-        <MudTh>SKU</MudTh>
+        <MudTh>Code</MudTh>
         <MudTh>Name</MudTh>
-        <MudTh Style="text-align:right">Price</MudTh>
-        <MudTh>Tax</MudTh>
+        <MudTh>Currency</MudTh>
+        <MudTh>Time zone</MudTh>
         <MudTh>Active</MudTh>
         <MudTh Style="text-align:right">Actions</MudTh>
     </HeaderContent>
     <RowTemplate>
-        <MudTd DataLabel="SKU"><code>@context.Sku</code></MudTd>
+        <MudTd DataLabel="Code"><code>@context.Code</code></MudTd>
         <MudTd DataLabel="Name">@context.Name</MudTd>
-        <MudTd DataLabel="Price" Style="text-align:right">@context.Currency @context.Price.ToString("0.00")</MudTd>
-        <MudTd DataLabel="Tax">@context.TaxCode</MudTd>
+        <MudTd DataLabel="Currency">@context.Currency</MudTd>
+        <MudTd DataLabel="Time zone">@context.TimeZoneId</MudTd>
         <MudTd DataLabel="Active">
             @if (context.IsActive)
             { <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Small" /> }
@@ -46,20 +39,19 @@
         </MudTd>
         <MudTd Style="text-align:right">
             <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                           Disabled="@(!Auth.Has("products.write"))"
+                           Disabled="@(!Auth.Has("shops.write"))"
                            OnClick="@(() => OpenEdit(context))" />
             <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
-                           Disabled="@(!Auth.Has("products.write"))"
+                           Disabled="@(!Auth.Has("shops.write"))"
                            OnClick="@(() => Delete(context))" />
         </MudTd>
     </RowTemplate>
-    <NoRecordsContent><MudText>No products found.</MudText></NoRecordsContent>
+    <NoRecordsContent><MudText>No shops yet.</MudText></NoRecordsContent>
 </MudTable>
 
 @code {
-    private List<ProductDto> _items = new();
+    private List<ShopDto> _items = new();
     private bool _loading = true;
-    private string _search = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -71,46 +63,45 @@
     private async Task Reload()
     {
         _loading = true;
-        var page = await Api.ListProductsAsync(_search, 1, 200);
-        _items = page?.Items.ToList() ?? new();
+        _items = (await Api.ListShopsAsync()).ToList();
         _loading = false;
     }
 
     private async Task OpenCreate()
     {
-        var dialog = await Dialogs.ShowAsync<ProductDialog>("New product",
+        var dialog = await Dialogs.ShowAsync<ShopDialog>("New shop",
             new DialogOptions { FullWidth = true, MaxWidth = MaxWidth.Small });
         var result = await dialog.Result;
-        if (result?.Canceled is false && result.Data is CreateProductRequest body)
+        if (result?.Canceled is false && result.Data is CreateShopRequest body)
         {
-            var p = await Api.CreateProductAsync(body);
-            if (p is null) { Snackbar.Add("Could not create product (duplicate SKU?)", Severity.Error); return; }
-            Snackbar.Add($"Created {p.Sku}", Severity.Success);
+            var s = await Api.CreateShopAsync(body);
+            if (s is null) { Snackbar.Add("Could not create shop (duplicate code?)", Severity.Error); return; }
+            Snackbar.Add($"Created {s.Code}", Severity.Success);
             await Reload();
         }
     }
 
-    private async Task OpenEdit(ProductDto p)
+    private async Task OpenEdit(ShopDto s)
     {
-        var parameters = new DialogParameters<ProductDialog> { { x => x.Existing, p } };
-        var dialog = await Dialogs.ShowAsync<ProductDialog>("Edit product", parameters,
+        var parameters = new DialogParameters<ShopDialog> { { x => x.Existing, s } };
+        var dialog = await Dialogs.ShowAsync<ShopDialog>("Edit shop", parameters,
             new DialogOptions { FullWidth = true, MaxWidth = MaxWidth.Small });
         var result = await dialog.Result;
-        if (result?.Canceled is false && result.Data is UpdateProductRequest body)
+        if (result?.Canceled is false && result.Data is UpdateShopRequest body)
         {
-            var u = await Api.UpdateProductAsync(p.Id, body);
+            var u = await Api.UpdateShopAsync(s.Id, body);
             if (u is null) { Snackbar.Add("Update failed", Severity.Error); return; }
             Snackbar.Add("Saved", Severity.Success);
             await Reload();
         }
     }
 
-    private async Task Delete(ProductDto p)
+    private async Task Delete(ShopDto s)
     {
-        var ok = await Dialogs.ShowMessageBox("Delete product",
-            $"Delete '{p.Name}'? This cannot be undone.", yesText: "Delete", cancelText: "Cancel");
+        var ok = await Dialogs.ShowMessageBox("Delete shop",
+            $"Delete '{s.Name}'? This cannot be undone.", yesText: "Delete", cancelText: "Cancel");
         if (ok is not true) return;
-        if (await Api.DeleteProductAsync(p.Id))
+        if (await Api.DeleteShopAsync(s.Id))
         {
             Snackbar.Add("Deleted", Severity.Info);
             await Reload();

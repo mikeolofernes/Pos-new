@@ -5,4 +5,16 @@
     <MudNavLink Href="/products"  Icon="@Icons.Material.Filled.Inventory2"    Match="NavLinkMatch.Prefix">Products</MudNavLink>
     <MudNavLink Href="/inventory" Icon="@Icons.Material.Filled.Warehouse"     Match="NavLinkMatch.Prefix">Inventory</MudNavLink>
     <MudNavLink Href="/shifts"    Icon="@Icons.Material.Filled.AccessTime"    Match="NavLinkMatch.Prefix">Shifts</MudNavLink>
+    @if (Auth.Has("shops.read"))
+    {
+        <MudNavLink Href="/shops" Icon="@Icons.Material.Filled.Store"          Match="NavLinkMatch.Prefix">Shops</MudNavLink>
+    }
+    @if (Auth.Has("users.manage"))
+    {
+        <MudNavLink Href="/users" Icon="@Icons.Material.Filled.People"         Match="NavLinkMatch.Prefix">Users</MudNavLink>
+    }
+    @if (Auth.Has("settings.manage"))
+    {
+        <MudNavLink Href="/tenants" Icon="@Icons.Material.Filled.Business"     Match="NavLinkMatch.Prefix">Tenants</MudNavLink>
+    }
 </MudNavMenu>

@@ -1,0 +1,74 @@
+@using Pos.Shared.Contracts
+
+<MudDialog>
+    <DialogContent>
+        <MudTextField @bind-Value="_code" Label="Code" Variant="Variant.Outlined"
+                      Required="true" Disabled="@(_isEdit)" Class="mb-3" />
+        <MudTextField @bind-Value="_name" Label="Name" Variant="Variant.Outlined" Required="true" Class="mb-3" />
+        <MudGrid Spacing="2" Class="mb-3">
+            <MudItem xs="4">
+                <MudTextField @bind-Value="_currency" Label="Currency" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="4">
+                <MudTextField @bind-Value="_countryCode" Label="Country" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="4">
+                <MudTextField @bind-Value="_timeZone" Label="Time zone" Variant="Variant.Outlined" />
+            </MudItem>
+        </MudGrid>
+        @if (_isEdit)
+        {
+            <MudSwitch @bind-Value="_isActive" Color="Color.Success">Active</MudSwitch>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private MudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public ShopDto? Existing { get; set; }
+
+    private bool _isEdit;
+    private string _code = "";
+    private string _name = "";
+    private string _currency = "USD";
+    private string _countryCode = "US";
+    private string _timeZone = "UTC";
+    private bool _isActive = true;
+
+    protected override void OnInitialized()
+    {
+        if (Existing is not null)
+        {
+            _isEdit = true;
+            _code = Existing.Code;
+            _name = Existing.Name;
+            _currency = Existing.Currency;
+            _timeZone = Existing.TimeZoneId;
+            _isActive = Existing.IsActive;
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private void Submit()
+    {
+        if (string.IsNullOrWhiteSpace(_name)) return;
+        if (_isEdit)
+        {
+            MudDialog.Close(DialogResult.Ok(new UpdateShopRequest(
+                _code.Trim(), _name.Trim(), _currency.Trim(),
+                _timeZone.Trim(), _countryCode.Trim(), _isActive)));
+        }
+        else
+        {
+            if (string.IsNullOrWhiteSpace(_code)) return;
+            MudDialog.Close(DialogResult.Ok(new CreateShopRequest(
+                _code.Trim(), _name.Trim(), _currency.Trim(),
+                _timeZone.Trim(), _countryCode.Trim())));
+        }
+    }
+}
