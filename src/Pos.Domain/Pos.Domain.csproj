@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\Pos.BuildingBlocks\Pos.BuildingBlocks.csproj" />
+  </ItemGroup>
+</Project>

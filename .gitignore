@@ -1,0 +1,31 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.idea/
+.vscode/
+*.swp
+*.swo
+
+## Build output
+out/
+publish/
+artifacts/
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Logs
+*.log
+
+## Environment / secrets
+.env
+.env.*
+!.env.example
+appsettings.*.Production.json
+
+## EF Core
+**/Migrations/*.Designer.cs
