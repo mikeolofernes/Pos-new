@@ -1,10 +1,21 @@
-/* Force MudMainContent to clear the fixed AppBar. Bootstrap's CSS reset can
-   stomp on MudBlazor's --mud-appbar-height var; explicit padding is safest. */
+/* ---------------------------------------------------------------
+   Layout: AppBar offset
+   --------------------------------------------------------------- */
+/* MudBlazor's --mud-appbar-height defaults to 64px (desktop) and 56px
+   (mobile). Bootstrap's CSS reset can stomp on the var. Pin the padding
+   explicitly per breakpoint so the AppBar never overlaps the content. */
 .mud-main-content {
     padding-top: 64px !important;
 }
+@media (max-width: 599.95px) {
+    .mud-main-content {
+        padding-top: 56px !important;
+    }
+}
 
-/* Auth shell (login) */
+/* ---------------------------------------------------------------
+   Auth shell (login)
+   --------------------------------------------------------------- */
 .auth-shell {
     min-height: 100dvh;
     display: grid;
@@ -18,20 +29,28 @@
     border-radius: 14px !important;
 }
 
-/* POS page — let MudGrid handle the columns; stretch the panes to fill */
+/* ---------------------------------------------------------------
+   POS page
+   --------------------------------------------------------------- */
 .pos-grid-root { min-height: calc(100dvh - 96px); }
-.pos-pane { height: 100%; min-height: 60vh; }
+.pos-pane { min-height: 60vh; }
 
-/* Catalog tile grid (CSS Grid) within MudPaper */
+@media (min-width: 960px) {
+    .pos-pane { height: 100%; }
+}
+
+/* Catalog tile grid (CSS Grid) within MudPaper.
+   Tiles shrink on phones so 2 fit across portrait. */
 .pos-tiles {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 10px;
-    max-height: calc(100dvh - 230px);
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 8px;
+    max-height: calc(100dvh - 260px);
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 .pos-tile {
-    min-height: 110px;
+    min-height: 96px;
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -45,21 +64,61 @@
 .pos-tile:active { transform: scale(.98); }
 
 /* Cart list grows to fill */
-.pos-cart-list { overflow-y: auto; max-height: calc(100dvh - 380px); }
+.pos-cart-list {
+    overflow-y: auto;
+    max-height: calc(100dvh - 420px);
+    -webkit-overflow-scrolling: touch;
+}
 
+@media (min-width: 600px) {
+    .pos-tiles { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+    .pos-tile { min-height: 110px; }
+}
 @media (min-width: 960px) {
-    .pos-tiles { max-height: calc(100dvh - 200px); }
+    .pos-tiles    { max-height: calc(100dvh - 200px); }
     .pos-cart-list { max-height: calc(100dvh - 350px); }
 }
 
-/* Comfortable touch targets on tablets */
-.mud-button { min-height: 44px; }
-.mud-button-size-large { min-height: 52px; }
+/* ---------------------------------------------------------------
+   Tables on mobile (MudTable Breakpoint=Sm switches to card mode).
+   Make the data rows readable when stacked. */
+@media (max-width: 599.95px) {
+    .mud-table-cell { padding: 6px 10px !important; }
+    .mud-table-cell:before {
+        font-weight: 600;
+        color: var(--mud-palette-text-secondary);
+    }
+}
 
-/* Tiny bootstrap-flavoured helpers used in markup */
+/* ---------------------------------------------------------------
+   Dialogs: full-screen on phones for usable forms */
+@media (max-width: 599.95px) {
+    .mud-dialog-container .mud-dialog {
+        margin: 0 !important;
+        max-width: 100vw !important;
+        width: 100vw !important;
+        max-height: 100dvh !important;
+        height: 100dvh !important;
+        border-radius: 0 !important;
+    }
+}
+
+/* ---------------------------------------------------------------
+   Touch targets + helpers */
+.mud-button       { min-height: 44px; }
+.mud-button-size-large { min-height: 52px; }
+.mud-icon-button  { min-width: 44px; min-height: 44px; }
+
+/* Prevent iOS Safari auto-zoom on input focus (font-size < 16px triggers it) */
+@media (max-width: 599.95px) {
+    .mud-input-root input,
+    .mud-input-root textarea { font-size: 16px !important; }
+}
+
+/* Bootstrap-flavoured helpers used in markup */
 .text-muted { color: var(--mud-palette-text-secondary) !important; }
 .fw-semibold { font-weight: 600 !important; }
 .fw-bold { font-weight: 700 !important; }
 .text-truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.border-top { border-top: 1px solid var(--mud-palette-lines-default); }
+.border-top    { border-top:    1px solid var(--mud-palette-lines-default); }
 .border-bottom { border-bottom: 1px solid var(--mud-palette-lines-default); }

@@ -20,8 +20,11 @@
             <MudIconButton Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit" OnClick="Logout" />
         </MudAppBar>
 
-        <MudDrawer @bind-Open="_drawerOpen" Elevation="2" ClipMode="DrawerClipMode.Always"
-                   Variant="@DrawerVariant.Mini" OpenMiniOnHover="true">
+        <MudDrawer @bind-Open="_drawerOpen" Elevation="2"
+                   ClipMode="DrawerClipMode.Always"
+                   Variant="@DrawerVariant.Responsive"
+                   Breakpoint="Breakpoint.Md"
+                   OpenMiniOnHover="true">
             <NavMenu />
         </MudDrawer>
 
@@ -36,6 +39,8 @@ else
 }
 
 @code {
+    // Open by default on desktop; the Responsive drawer will hide itself on
+    // small screens and the user can open it from the hamburger.
     private bool _drawerOpen = true;
 
     private readonly MudTheme _theme = new()
