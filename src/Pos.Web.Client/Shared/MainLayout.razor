@@ -11,7 +11,7 @@
 @if (Auth.IsAuthenticated)
 {
     <MudLayout>
-        <MudAppBar Elevation="1" Color="Color.Dark" Dense="true">
+        <MudAppBar Elevation="1" Color="Color.Dark">
             <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit"
                            OnClick="@(() => _drawerOpen = !_drawerOpen)" Edge="Edge.Start" />
             <MudText Typo="Typo.h6" Class="ms-2">POS</MudText>
