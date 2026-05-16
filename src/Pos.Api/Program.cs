@@ -104,6 +104,7 @@ app.UseRateLimiter();
 // In production we apply migrations; in dev, allow EnsureCreated when no migrations exist
 using (var scope = app.Services.CreateScope())
 {
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     var hasMigrations = db.Database.GetMigrations().Any();
     if (hasMigrations)
@@ -111,10 +112,19 @@ using (var scope = app.Services.CreateScope())
     else if (app.Environment.IsDevelopment())
         await db.Database.EnsureCreatedAsync();
 
-    if (app.Environment.IsDevelopment())
+    // Seed runs unconditionally — the seeder is idempotent (returns early if
+    // the demo tenant already exists), so it's safe in any environment for now.
+    // Remove this once you have proper bootstrap/onboarding.
+    try
     {
         var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
         await DbSeeder.SeedAsync(db, hasher);
+        logger.LogInformation("Seed check complete (env={Env})", app.Environment.EnvironmentName);
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Seeding failed");
+        throw;
     }
 }
 
