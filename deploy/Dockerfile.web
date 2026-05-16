@@ -1,0 +1,15 @@
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+WORKDIR /src
+COPY Pos.sln Directory.Build.props ./
+COPY src/ src/
+RUN dotnet workload install wasm-tools
+RUN dotnet publish src/Pos.Web/Pos.Web.csproj -c Release -o /app /p:UseAppHost=false
+
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
+WORKDIR /app
+RUN groupadd -r app && useradd -r -g app app
+COPY --from=build /app .
+USER app
+ENV ASPNETCORE_URLS=http://0.0.0.0:8081
+EXPOSE 8081
+ENTRYPOINT ["dotnet", "Pos.Web.dll"]

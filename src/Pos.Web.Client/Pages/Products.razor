@@ -1,0 +1,129 @@
+@page "/products"
+@inject ApiClient Api
+@inject AuthState Auth
+@inject NavigationManager Nav
+
+<PageTitle>Products</PageTitle>
+
+<div class="page-head">
+    <h1 class="h3">Products</h1>
+    <button class="btn btn-primary" @onclick="() => _showCreate = true" disabled="@(!Auth.Has("products.write"))">+ New</button>
+</div>
+
+<div class="mb-3">
+    <input class="form-control" placeholder="Search by name or SKU…"
+           @bind="_search" @bind:event="oninput" @bind:after="Reload" />
+</div>
+
+@if (_loading)
+{
+    <div>Loading…</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead class="table-light">
+                <tr><th>SKU</th><th>Name</th><th class="text-end">Price</th><th>Tax</th><th>Active</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var p in _items)
+                {
+                    <tr>
+                        <td><code>@p.Sku</code></td>
+                        <td>@p.Name</td>
+                        <td class="text-end">@p.Currency @p.Price.ToString("0.00")</td>
+                        <td>@p.TaxCode</td>
+                        <td>@(p.IsActive ? "✓" : "—")</td>
+                    </tr>
+                }
+                @if (_items.Count == 0)
+                {
+                    <tr><td colspan="5" class="text-muted text-center py-4">No products found.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (_showCreate)
+{
+    <div class="modal-overlay" @onclick="() => _showCreate = false">
+        <div class="modal-card" @onclick:stopPropagation>
+            <h3 class="h5">New product</h3>
+            <EditForm Model="_new" OnValidSubmit="Create">
+                <div class="mb-2"><label class="form-label">SKU</label>
+                    <InputText class="form-control" @bind-Value="_new.Sku" /></div>
+                <div class="mb-2"><label class="form-label">Name</label>
+                    <InputText class="form-control" @bind-Value="_new.Name" /></div>
+                <div class="row g-2 mb-2">
+                    <div class="col-7"><label class="form-label">Price</label>
+                        <InputNumber class="form-control" @bind-Value="_new.Price" /></div>
+                    <div class="col-5"><label class="form-label">Currency</label>
+                        <InputText class="form-control" @bind-Value="_new.Currency" /></div>
+                </div>
+                <div class="mb-3"><label class="form-label">Tax code</label>
+                    <InputText class="form-control" @bind-Value="_new.TaxCode" /></div>
+                @if (_createError is not null)
+                {
+                    <div class="alert alert-danger py-2">@_createError</div>
+                }
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-secondary flex-fill" @onclick="() => _showCreate = false">Cancel</button>
+                    <button type="submit" class="btn btn-primary flex-fill" disabled="@_creating">Save</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@code {
+    private sealed class NewModel
+    {
+        public string Sku { get; set; } = "";
+        public string Name { get; set; } = "";
+        public decimal Price { get; set; }
+        public string Currency { get; set; } = "USD";
+        public string TaxCode { get; set; } = "standard";
+        public bool TrackInventory { get; set; } = true;
+    }
+
+    private List<ProductDto> _items = new();
+    private bool _loading = true;
+    private bool _showCreate;
+    private bool _creating;
+    private string? _createError;
+    private string _search = "";
+    private NewModel _new = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Auth.LoadAsync();
+        if (!Auth.IsAuthenticated) { Nav.NavigateTo("/login", true); return; }
+        await Reload();
+    }
+
+    private async Task Reload()
+    {
+        _loading = true;
+        var page = await Api.ListProductsAsync(_search, 1, 200);
+        _items = page?.Items.ToList() ?? new();
+        _loading = false;
+    }
+
+    private async Task Create()
+    {
+        _creating = true; _createError = null;
+        try
+        {
+            var p = await Api.CreateProductAsync(new CreateProductRequest(
+                _new.Sku, _new.Name, null, null, _new.Price, _new.Currency, _new.TaxCode, _new.TrackInventory));
+            if (p is null) { _createError = "Could not create product (duplicate SKU?)"; return; }
+            _showCreate = false;
+            _new = new NewModel();
+            await Reload();
+        }
+        catch (Exception ex) { _createError = ex.Message; }
+        finally { _creating = false; }
+    }
+}

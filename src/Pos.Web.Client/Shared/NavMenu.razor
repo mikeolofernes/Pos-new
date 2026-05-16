@@ -1,0 +1,13 @@
+@inject AuthState Auth
+
+<nav class="nav flex-column app-navmenu">
+    <NavLink class="nav-link" href="/pos" Match="NavLinkMatch.Prefix" @onclick="OnClick">🧾 POS</NavLink>
+    <NavLink class="nav-link" href="/products" Match="NavLinkMatch.Prefix" @onclick="OnClick">📦 Products</NavLink>
+    <NavLink class="nav-link" href="/inventory" Match="NavLinkMatch.Prefix" @onclick="OnClick">🏷️ Inventory</NavLink>
+    <NavLink class="nav-link" href="/shifts" Match="NavLinkMatch.Prefix" @onclick="OnClick">⏱️ Shifts</NavLink>
+</nav>
+
+@code {
+    [Parameter] public EventCallback OnNavigated { get; set; }
+    private Task OnClick() => OnNavigated.HasDelegate ? OnNavigated.InvokeAsync() : Task.CompletedTask;
+}

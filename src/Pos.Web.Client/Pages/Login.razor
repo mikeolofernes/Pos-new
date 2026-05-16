@@ -1,0 +1,66 @@
+@page "/login"
+@layout Shared.AuthLayout
+@inject ApiClient Api
+@inject AuthState Auth
+@inject NavigationManager Nav
+
+<div class="auth-card">
+    <h1 class="h3 mb-4">Sign in</h1>
+
+    <EditForm Model="_model" OnValidSubmit="Submit">
+        <DataAnnotationsValidator />
+
+        <div class="mb-3">
+            <label class="form-label">Tenant</label>
+            <InputText class="form-control form-control-lg" @bind-Value="_model.TenantSlug" autocomplete="organization" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Email</label>
+            <InputText class="form-control form-control-lg" @bind-Value="_model.Email" type="email" autocomplete="username" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Password</label>
+            <InputText class="form-control form-control-lg" @bind-Value="_model.Password" type="password" autocomplete="current-password" />
+        </div>
+
+        @if (_error is not null)
+        {
+            <div class="alert alert-danger py-2">@_error</div>
+        }
+
+        <button class="btn btn-primary btn-lg w-100" type="submit" disabled="@_busy">
+            @(_busy ? "Signing in…" : "Sign in")
+        </button>
+    </EditForm>
+
+    <p class="small text-muted mt-3 mb-0">
+        Dev seed: <code>demo</code> / <code>admin@@demo.local</code> / <code>Passw0rd!</code>
+    </p>
+</div>
+
+@code {
+    private sealed class Model
+    {
+        public string TenantSlug { get; set; } = "demo";
+        public string Email { get; set; } = "";
+        public string Password { get; set; } = "";
+    }
+
+    private readonly Model _model = new();
+    private bool _busy;
+    private string? _error;
+
+    private async Task Submit()
+    {
+        _busy = true; _error = null;
+        try
+        {
+            var resp = await Api.LoginAsync(new LoginRequest(_model.TenantSlug, _model.Email, _model.Password, "browser"));
+            if (resp is null) { _error = "Invalid credentials"; return; }
+            await Auth.SetAsync(resp);
+            Nav.NavigateTo("/pos");
+        }
+        catch (Exception ex) { _error = ex.Message; }
+        finally { _busy = false; }
+    }
+}

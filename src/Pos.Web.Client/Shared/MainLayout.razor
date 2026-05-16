@@ -1,0 +1,54 @@
+@inherits LayoutComponentBase
+@inject AuthState Auth
+@inject NavigationManager Nav
+
+<div class="app-shell">
+    @if (Auth.IsAuthenticated)
+    {
+        <aside class="app-nav d-none d-md-flex flex-column">
+            <div class="app-brand">POS</div>
+            <NavMenu />
+            <div class="mt-auto p-3 small text-muted">
+                <div class="fw-bold">@Auth.Current?.DisplayName</div>
+                <a href="#" @onclick:preventDefault @onclick="Logout">Sign out</a>
+            </div>
+        </aside>
+        <header class="app-topbar d-md-none">
+            <button class="btn btn-link text-white" @onclick="ToggleMobile" aria-label="Menu">☰</button>
+            <span class="app-brand-sm">POS</span>
+            <span class="ms-auto small">@Auth.Current?.DisplayName</span>
+        </header>
+        @if (_mobileOpen)
+        {
+            <div class="mobile-drawer d-md-none" @onclick="ToggleMobile">
+                <div class="mobile-drawer-inner" @onclick:stopPropagation>
+                    <NavMenu OnNavigated="ToggleMobile" />
+                    <a class="d-block p-3" href="#" @onclick:preventDefault @onclick="Logout">Sign out</a>
+                </div>
+            </div>
+        }
+    }
+    <main class="app-main">
+        @Body
+    </main>
+</div>
+
+@code {
+    private bool _mobileOpen;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Auth.Changed += StateHasChanged;
+        await Auth.LoadAsync();
+    }
+
+    private void ToggleMobile() => _mobileOpen = !_mobileOpen;
+
+    private async Task Logout()
+    {
+        await Auth.ClearAsync();
+        Nav.NavigateTo("/login", true);
+    }
+
+    public void Dispose() => Auth.Changed -= StateHasChanged;
+}

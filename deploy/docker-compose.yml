@@ -35,5 +35,16 @@ services:
       redis:    { condition: service_healthy }
     ports: ["8080:8080"]
 
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.web
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ReverseProxy__Clusters__api__Destinations__primary__Address: "http://api:8080/"
+    depends_on:
+      api: { condition: service_started }
+    ports: ["8081:8081"]
+
 volumes:
   pgdata:

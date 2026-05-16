@@ -1,0 +1,11 @@
+@page "/"
+@inject AuthState Auth
+@inject NavigationManager Nav
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await Auth.LoadAsync();
+        Nav.NavigateTo(Auth.IsAuthenticated ? "/pos" : "/login", true);
+    }
+}
