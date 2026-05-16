@@ -20,10 +20,10 @@
     <!-- App styles (Bootstrap utility overrides for POS layout) -->
     <link rel="stylesheet" href="_content/Pos.Web.Client/css/app.css" />
     <link href="Pos.Web.Client.styles.css" rel="stylesheet" />
-    <HeadOutlet @rendermode="InteractiveWebAssembly" />
+    <HeadOutlet @rendermode="@WasmNoPrerender" />
 </head>
 <body>
-    <Routes @rendermode="InteractiveWebAssembly" />
+    <Routes @rendermode="@WasmNoPrerender" />
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
     <script src="_framework/blazor.web.js" autostart="false"></script>
     <script>
@@ -35,3 +35,9 @@
     </script>
 </body>
 </html>
+
+@code {
+    // Disable prerendering so client-only services (AuthState, IndexedDb, etc.)
+    // are never resolved server-side during a prerender pass.
+    private static readonly InteractiveWebAssemblyRenderMode WasmNoPrerender = new(prerender: false);
+}
