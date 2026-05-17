@@ -25,6 +25,13 @@ public class ApiClient
         return r.ReasonPhrase;
     }
 
+    private async Task<T?> SafeGetAsync<T>(string url, CancellationToken ct) where T : class
+    {
+        var r = await _http.GetAsync(url, ct);
+        if (!r.IsSuccessStatusCode) return null;
+        return await r.Content.ReadFromJsonAsync<T>(cancellationToken: ct);
+    }
+
     private sealed record ProblemDetailsLite(string? Title, string? Detail, int? Status);
 
     // ---- Auth ----
@@ -38,8 +45,7 @@ public class ApiClient
 
     // ---- Tenants ----
     public async Task<IReadOnlyList<TenantDto>> ListTenantsAsync(CancellationToken ct = default) =>
-        await _http.GetFromJsonAsync<IReadOnlyList<TenantDto>>("/api/v1/tenants", ct)
-            ?? Array.Empty<TenantDto>();
+        await SafeGetAsync<IReadOnlyList<TenantDto>>("/api/v1/tenants", ct) ?? Array.Empty<TenantDto>();
 
     public async Task<TenantDto?> CreateTenantAsync(CreateTenantRequest body, CancellationToken ct = default)
     {
@@ -50,12 +56,10 @@ public class ApiClient
 
     // ---- Shops ----
     public async Task<IReadOnlyList<ShopDto>> ListShopsAsync(CancellationToken ct = default) =>
-        await _http.GetFromJsonAsync<IReadOnlyList<ShopDto>>("/api/v1/shops", ct)
-            ?? Array.Empty<ShopDto>();
+        await SafeGetAsync<IReadOnlyList<ShopDto>>("/api/v1/shops", ct) ?? Array.Empty<ShopDto>();
 
     public async Task<IReadOnlyList<ShopDto>> ListMyShopsAsync(CancellationToken ct = default) =>
-        await _http.GetFromJsonAsync<IReadOnlyList<ShopDto>>("/api/v1/shops/mine", ct)
-            ?? Array.Empty<ShopDto>();
+        await SafeGetAsync<IReadOnlyList<ShopDto>>("/api/v1/shops/mine", ct) ?? Array.Empty<ShopDto>();
 
     public async Task<ShopDto?> CreateShopAsync(CreateShopRequest body, CancellationToken ct = default)
     {
@@ -78,7 +82,7 @@ public class ApiClient
     public async Task<IReadOnlyList<UserDto>> ListUsersAsync(string? q = null, CancellationToken ct = default)
     {
         var url = "/api/v1/users" + (string.IsNullOrWhiteSpace(q) ? "" : $"?q={Uri.EscapeDataString(q)}");
-        return await _http.GetFromJsonAsync<IReadOnlyList<UserDto>>(url, ct) ?? Array.Empty<UserDto>();
+        return await SafeGetAsync<IReadOnlyList<UserDto>>(url, ct) ?? Array.Empty<UserDto>();
     }
 
     public async Task<UserDto?> CreateUserAsync(CreateUserRequest body, CancellationToken ct = default)
@@ -102,8 +106,7 @@ public class ApiClient
 
     // ---- Categories ----
     public async Task<IReadOnlyList<CategoryDto>> ListCategoriesAsync(CancellationToken ct = default) =>
-        await _http.GetFromJsonAsync<IReadOnlyList<CategoryDto>>("/api/v1/categories", ct)
-            ?? Array.Empty<CategoryDto>();
+        await SafeGetAsync<IReadOnlyList<CategoryDto>>("/api/v1/categories", ct) ?? Array.Empty<CategoryDto>();
 
     public async Task<CategoryDto?> CreateCategoryAsync(CreateCategoryRequest body, CancellationToken ct = default)
     {
@@ -124,8 +127,7 @@ public class ApiClient
 
     // ---- Quick selects (POS tiles) ----
     public async Task<IReadOnlyList<QuickSelectDto>> ListQuickSelectsAsync(CancellationToken ct = default) =>
-        await _http.GetFromJsonAsync<IReadOnlyList<QuickSelectDto>>("/api/v1/quick-selects", ct)
-            ?? Array.Empty<QuickSelectDto>();
+        await SafeGetAsync<IReadOnlyList<QuickSelectDto>>("/api/v1/quick-selects", ct) ?? Array.Empty<QuickSelectDto>();
 
     public async Task<QuickSelectDto?> CreateQuickSelectAsync(CreateQuickSelectRequest body, CancellationToken ct = default)
     {
@@ -149,7 +151,7 @@ public class ApiClient
     {
         var url = $"/api/v1/products?page={page}&pageSize={pageSize}"
                   + (string.IsNullOrWhiteSpace(q) ? "" : $"&q={Uri.EscapeDataString(q)}");
-        return await _http.GetFromJsonAsync<PageOf<ProductDto>>(url, ct);
+        return await SafeGetAsync<PageOf<ProductDto>>(url, ct);
     }
 
     public async Task<ProductDto?> CreateProductAsync(CreateProductRequest body, CancellationToken ct = default)
@@ -171,7 +173,7 @@ public class ApiClient
 
     // ---- Inventory ----
     public async Task<IReadOnlyList<BalanceDto>> GetBalanceAsync(Guid productId, CancellationToken ct = default) =>
-        await _http.GetFromJsonAsync<IReadOnlyList<BalanceDto>>($"/api/v1/inventory/{productId}/balance", ct)
+        await SafeGetAsync<IReadOnlyList<BalanceDto>>($"/api/v1/inventory/{productId}/balance", ct)
             ?? Array.Empty<BalanceDto>();
 
     public async Task<HttpResponseMessage> AdjustStockAsync(AdjustStockRequest body, string idemKey, CancellationToken ct = default)
