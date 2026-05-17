@@ -9,12 +9,12 @@ public sealed record SalePaymentRequest(string Method, decimal Amount, string? E
 
 public sealed record CreateSaleRequest(
     Guid ShopId, Guid RegisterId, Guid ShiftId, Guid WarehouseId,
-    Guid? CustomerId, string Currency,
+    Guid? CustomerId,
     IReadOnlyList<SaleLineRequest> Items,
     IReadOnlyList<SalePaymentRequest> Payments,
     string? Notes, DateTimeOffset? ClientCompletedAt);
 
 public sealed record SaleSummary(
     Guid Id, string Number, decimal Subtotal, decimal DiscountTotal,
-    decimal TaxTotal, decimal Total, decimal Tendered, decimal Change,
+    decimal Total, decimal Tendered, decimal Change,
     string Status, DateTimeOffset CompletedAt);

@@ -16,7 +16,6 @@ public class CreateProductValidator : AbstractValidator<CreateProductCommand>
         RuleFor(x => x.Body.Sku).NotEmpty().MaximumLength(64);
         RuleFor(x => x.Body.Name).NotEmpty().MaximumLength(256);
         RuleFor(x => x.Body.Price).GreaterThanOrEqualTo(0);
-        RuleFor(x => x.Body.Currency).NotEmpty().Length(3);
     }
 }
 
@@ -40,15 +39,13 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result
             Type = ProductType.Standard,
             TrackInventory = b.TrackInventory,
             DefaultPriceAmount = b.Price,
-            DefaultPriceCurrency = b.Currency,
-            TaxCode = b.TaxCode,
             ImageUrl = b.ImageUrl
         };
         _db.Products.Add(p);
         await _db.SaveChangesAsync(ct);
 
         return new ProductDto(p.Id, p.Sku, p.Name, p.Description, p.CategoryId,
-            p.Type.ToString(), p.DefaultPriceAmount, p.DefaultPriceCurrency,
-            p.TaxCode, p.ImageUrl, p.TrackInventory, p.IsActive);
+            p.Type.ToString(), p.DefaultPriceAmount,
+            p.ImageUrl, p.TrackInventory, p.IsActive);
     }
 }

@@ -15,11 +15,9 @@ public class SaleConfig : IEntityTypeConfiguration<Sale>
         e.HasIndex(x => new { x.TenantId, x.ShiftId });
         e.HasIndex(x => x.Number);
         e.Property(x => x.Number).HasMaxLength(64).IsRequired();
-        e.Property(x => x.Currency).HasMaxLength(3).IsRequired();
         e.Property(x => x.Status).HasConversion<short>();
         e.Property(x => x.Subtotal).HasColumnType("numeric(19,4)");
         e.Property(x => x.DiscountTotal).HasColumnType("numeric(19,4)");
-        e.Property(x => x.TaxTotal).HasColumnType("numeric(19,4)");
         e.Property(x => x.Total).HasColumnType("numeric(19,4)");
         e.Property(x => x.TenderedTotal).HasColumnType("numeric(19,4)");
         e.Property(x => x.ChangeDue).HasColumnType("numeric(19,4)");
@@ -41,9 +39,7 @@ public class SaleItemConfig : IEntityTypeConfiguration<SaleItem>
         e.Property(x => x.Quantity).HasColumnType("numeric(19,4)");
         e.Property(x => x.UnitPrice).HasColumnType("numeric(19,4)");
         e.Property(x => x.LineDiscount).HasColumnType("numeric(19,4)");
-        e.Property(x => x.LineTax).HasColumnType("numeric(19,4)");
         e.Property(x => x.LineTotal).HasColumnType("numeric(19,4)");
-        e.Property(x => x.TaxRateSnapshot).HasColumnType("numeric(9,6)");
     }
 }
 
@@ -55,9 +51,7 @@ public class SalePaymentConfig : IEntityTypeConfiguration<SalePayment>
         e.HasKey(x => x.Id);
         e.HasIndex(x => x.SaleId);
         e.Property(x => x.Method).HasMaxLength(32).IsRequired();
-        e.Property(x => x.Currency).HasMaxLength(3).IsRequired();
         e.Property(x => x.Amount).HasColumnType("numeric(19,4)");
-        e.Property(x => x.FxRate).HasColumnType("numeric(19,8)");
         e.Property(x => x.Status).HasConversion<short>();
         e.Property(x => x.ExternalReference).HasMaxLength(128);
     }

@@ -2,7 +2,7 @@
 
 <MudDialog>
     <DialogContent>
-        <MudText Typo="Typo.h6" Class="mb-3">@FormatMoney(Total, Currency)</MudText>
+        <MudText Typo="Typo.h6" Class="mb-3">@FormatMoney(Total)</MudText>
 
         <MudSelect T="string" @bind-Value="_method" Label="Method" Variant="Variant.Outlined" Class="mb-3">
             <MudSelectItem Value="@("cash")">Cash</MudSelectItem>
@@ -15,7 +15,7 @@
 
         <div class="d-flex justify-content-between mt-2">
             <MudText>Change due</MudText>
-            <MudText Typo="Typo.subtitle1">@FormatMoney(Math.Max(0, _amount - Total), Currency)</MudText>
+            <MudText Typo="Typo.subtitle1">@FormatMoney(Math.Max(0, _amount - Total))</MudText>
         </div>
     </DialogContent>
     <DialogActions>
@@ -31,7 +31,6 @@
     [CascadingParameter] private MudDialogInstance MudDialog { get; set; } = default!;
 
     [Parameter] public decimal Total { get; set; }
-    [Parameter] public string Currency { get; set; } = "USD";
 
     private string _method = "cash";
     private decimal _amount;
@@ -43,5 +42,5 @@
     private void Cancel() => MudDialog.Cancel();
     private void Submit() => MudDialog.Close(DialogResult.Ok(new TenderResult(_method, _amount)));
 
-    private static string FormatMoney(decimal amount, string currency) => $"{currency} {amount:0.00}";
+    private static string FormatMoney(decimal amount) => $"{amount:0.00}";
 }

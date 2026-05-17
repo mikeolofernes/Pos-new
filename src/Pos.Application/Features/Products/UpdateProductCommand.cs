@@ -14,8 +14,6 @@ public class UpdateProductValidator : AbstractValidator<UpdateProductCommand>
     {
         RuleFor(x => x.Body.Name).NotEmpty().MaximumLength(256);
         RuleFor(x => x.Body.Price).GreaterThanOrEqualTo(0);
-        RuleFor(x => x.Body.Currency).NotEmpty().Length(3);
-        RuleFor(x => x.Body.TaxCode).NotEmpty();
     }
 }
 
@@ -34,8 +32,6 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result
         p.Description = b.Description;
         p.CategoryId = b.CategoryId;
         p.DefaultPriceAmount = b.Price;
-        p.DefaultPriceCurrency = b.Currency;
-        p.TaxCode = b.TaxCode;
         p.ImageUrl = b.ImageUrl;
         p.TrackInventory = b.TrackInventory;
         p.IsActive = b.IsActive;
@@ -43,8 +39,8 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result
         await _db.SaveChangesAsync(ct);
 
         return new ProductDto(p.Id, p.Sku, p.Name, p.Description, p.CategoryId,
-            p.Type.ToString(), p.DefaultPriceAmount, p.DefaultPriceCurrency,
-            p.TaxCode, p.ImageUrl, p.TrackInventory, p.IsActive);
+            p.Type.ToString(), p.DefaultPriceAmount,
+            p.ImageUrl, p.TrackInventory, p.IsActive);
     }
 }
 

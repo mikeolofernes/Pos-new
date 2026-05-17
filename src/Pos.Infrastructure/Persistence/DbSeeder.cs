@@ -19,8 +19,6 @@ public static class DbSeeder
             Slug = "demo",
             Name = "Demo Co.",
             CountryCode = "US",
-            DefaultCurrency = "USD",
-            TimeZoneId = "UTC",
             Status = TenantStatus.Active,
             IsolationMode = TenantIsolationMode.Pooled
         };
@@ -31,8 +29,7 @@ public static class DbSeeder
             RenewsAt = DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(1)) };
         db.Subscriptions.Add(sub);
 
-        var shop = new Shop { TenantId = tenant.Id, Code = "MAIN", Name = "Main Store",
-            Currency = "USD", TimeZoneId = "UTC", CountryCode = "US" };
+        var shop = new Shop { TenantId = tenant.Id, Code = "MAIN", Name = "Main Store", CountryCode = "US" };
         db.Shops.Add(shop);
 
         var register = new Register { TenantId = tenant.Id, ShopId = shop.Id, Code = "R1", Name = "Register 1" };
@@ -53,21 +50,13 @@ public static class DbSeeder
             new UserShopRole { TenantId = tenant.Id, UserId = admin.Id, ShopId = shop.Id, RoleId = adminRole.Id },
             new UserShopRole { TenantId = tenant.Id, UserId = cashier.Id, ShopId = shop.Id, RoleId = cashierRole.Id });
 
-        db.Taxes.Add(new Tax { TenantId = tenant.Id, Code = "standard",
-            Name = "Standard Sales Tax", Rate = 0.0875m, IsInclusive = false, IsActive = true });
-        db.Taxes.Add(new Tax { TenantId = tenant.Id, Code = "zero",
-            Name = "Zero Rated", Rate = 0m, IsInclusive = false, IsActive = true });
-
         db.Products.AddRange(
             new Product { TenantId = tenant.Id, ShopId = shop.Id, Sku ="COFFEE-12", Name = "Coffee 12oz",
-                DefaultPriceAmount = 4.50m, DefaultPriceCurrency = "USD",
-                DefaultCost = 1.10m, TaxCode = "standard", TrackInventory = true },
+                DefaultPriceAmount = 4.50m, DefaultCost = 1.10m, TrackInventory = true },
             new Product { TenantId = tenant.Id, ShopId = shop.Id, Sku ="MUFFIN-CHOC", Name = "Chocolate Muffin",
-                DefaultPriceAmount = 3.25m, DefaultPriceCurrency = "USD",
-                DefaultCost = 0.90m, TaxCode = "standard", TrackInventory = true },
+                DefaultPriceAmount = 3.25m, DefaultCost = 0.90m, TrackInventory = true },
             new Product { TenantId = tenant.Id, ShopId = shop.Id, Sku ="WATER-500", Name = "Bottled Water 500ml",
-                DefaultPriceAmount = 1.75m, DefaultPriceCurrency = "USD",
-                DefaultCost = 0.40m, TaxCode = "zero", TrackInventory = true });
+                DefaultPriceAmount = 1.75m, DefaultCost = 0.40m, TrackInventory = true });
 
         await db.SaveChangesAsync(ct);
     }

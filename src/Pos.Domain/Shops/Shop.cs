@@ -12,8 +12,6 @@ public class Shop : TenantEntity
     public string? Region { get; set; }
     public string? PostalCode { get; set; }
     public string CountryCode { get; set; } = "US";
-    public string TimeZoneId { get; set; } = "UTC";
-    public string Currency { get; set; } = "USD";
     public bool IsActive { get; set; } = true;
 }
 

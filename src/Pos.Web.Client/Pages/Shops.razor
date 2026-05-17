@@ -21,16 +21,12 @@
     <HeaderContent>
         <MudTh>Code</MudTh>
         <MudTh>Name</MudTh>
-        <MudTh>Currency</MudTh>
-        <MudTh>Time zone</MudTh>
         <MudTh>Active</MudTh>
         <MudTh Style="text-align:right">Actions</MudTh>
     </HeaderContent>
     <RowTemplate>
         <MudTd DataLabel="Code"><code>@context.Code</code></MudTd>
         <MudTd DataLabel="Name">@context.Name</MudTd>
-        <MudTd DataLabel="Currency">@context.Currency</MudTd>
-        <MudTd DataLabel="Time zone">@context.TimeZoneId</MudTd>
         <MudTd DataLabel="Active">
             @if (context.IsActive)
             { <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Small" /> }

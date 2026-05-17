@@ -12,21 +12,21 @@ public sealed record RefreshRequest(string RefreshToken);
 
 // ---- Tenants ----
 public sealed record TenantDto(
-    Guid Id, string Slug, string Name, string CountryCode, string DefaultCurrency,
-    string TimeZoneId, string Status, DateTimeOffset CreatedAt);
+    Guid Id, string Slug, string Name, string CountryCode,
+    string Status, DateTimeOffset CreatedAt);
 
 public sealed record CreateTenantRequest(
-    string Slug, string Name, string CountryCode, string DefaultCurrency, string TimeZoneId,
+    string Slug, string Name, string CountryCode,
     string AdminEmail, string AdminDisplayName, string AdminPassword);
 
 // ---- Shops ----
-public sealed record ShopDto(Guid Id, string Code, string Name, string Currency, string TimeZoneId, bool IsActive);
+public sealed record ShopDto(Guid Id, string Code, string Name, bool IsActive);
 
 public sealed record CreateShopRequest(
-    string Code, string Name, string Currency, string TimeZoneId, string CountryCode, Guid? TenantId = null);
+    string Code, string Name, string CountryCode, Guid? TenantId = null);
 
 public sealed record UpdateShopRequest(
-    string Code, string Name, string Currency, string TimeZoneId, string CountryCode, bool IsActive);
+    string Code, string Name, string CountryCode, bool IsActive);
 
 // ---- Users ----
 public sealed record UserDto(
@@ -53,23 +53,23 @@ public sealed record UpdateCategoryRequest(Guid? ParentId, string Name, string S
 // ---- Products ----
 public sealed record ProductDto(
     Guid Id, string Sku, string Name, string? Description, Guid? CategoryId,
-    string Type, decimal Price, string Currency, string TaxCode,
+    string Type, decimal Price,
     string? ImageUrl, bool TrackInventory, bool IsActive);
 
 public sealed record CreateProductRequest(
     string Sku, string Name, string? Description, Guid? CategoryId,
-    decimal Price, string Currency, string TaxCode, string? ImageUrl, bool TrackInventory);
+    decimal Price, string? ImageUrl, bool TrackInventory);
 
 public sealed record UpdateProductRequest(
     string Name, string? Description, Guid? CategoryId,
-    decimal Price, string Currency, string TaxCode, string? ImageUrl,
+    decimal Price, string? ImageUrl,
     bool TrackInventory, bool IsActive);
 
 // ---- Quick selects (POS shortcut tiles) ----
 public sealed record QuickSelectDto(
     Guid Id, Guid ShopId, Guid ProductId, int Position,
     string? Label, string? Color,
-    string ProductSku, string ProductName, decimal Price, string Currency, string? ImageUrl);
+    string ProductSku, string ProductName, decimal Price, string? ImageUrl);
 
 public sealed record CreateQuickSelectRequest(Guid ProductId, int? Position, string? Label, string? Color);
 public sealed record UpdateQuickSelectRequest(int Position, string? Label, string? Color);
@@ -92,14 +92,14 @@ public sealed record SalePaymentRequest(string Method, decimal Amount, string? E
 
 public sealed record CreateSaleRequest(
     Guid ShopId, Guid RegisterId, Guid ShiftId, Guid WarehouseId,
-    Guid? CustomerId, string Currency,
+    Guid? CustomerId,
     IReadOnlyList<SaleLineRequest> Items,
     IReadOnlyList<SalePaymentRequest> Payments,
     string? Notes, DateTimeOffset? ClientCompletedAt);
 
 public sealed record SaleSummary(
     Guid Id, string Number, decimal Subtotal, decimal DiscountTotal,
-    decimal TaxTotal, decimal Total, decimal Tendered, decimal Change,
+    decimal Total, decimal Tendered, decimal Change,
     string Status, DateTimeOffset CompletedAt);
 
 public sealed record OpenShiftRequest(Guid ShopId, Guid RegisterId, decimal OpeningFloat);

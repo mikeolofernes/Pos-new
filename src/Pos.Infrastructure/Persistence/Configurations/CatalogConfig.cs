@@ -24,15 +24,12 @@ public class ProductConfig : IEntityTypeConfiguration<Product>
         e.HasKey(x => x.Id);
         e.HasIndex(x => new { x.TenantId, x.ShopId, x.Sku }).IsUnique();
         e.HasIndex(x => new { x.TenantId, x.ShopId, x.Name });
-        e.Ignore(x => x.DefaultPrice);
         e.Property(x => x.Sku).HasMaxLength(64).IsRequired();
         e.Property(x => x.Name).HasMaxLength(256).IsRequired();
         e.Property(x => x.Description).HasMaxLength(2000);
         e.Property(x => x.Type).HasConversion<short>();
         e.Property(x => x.DefaultPriceAmount).HasColumnType("numeric(19,4)");
-        e.Property(x => x.DefaultPriceCurrency).HasMaxLength(3).IsRequired();
         e.Property(x => x.DefaultCost).HasColumnType("numeric(19,4)");
-        e.Property(x => x.TaxCode).HasMaxLength(32).IsRequired();
         e.Property(x => x.ImageUrl).HasMaxLength(1024);
     }
 }
@@ -76,18 +73,5 @@ public class BarcodeConfig : IEntityTypeConfiguration<Barcode>
         e.HasIndex(x => x.ProductId);
         e.Property(x => x.Code).HasMaxLength(64).IsRequired();
         e.Property(x => x.Symbology).HasMaxLength(16).IsRequired();
-    }
-}
-
-public class TaxConfig : IEntityTypeConfiguration<Tax>
-{
-    public void Configure(EntityTypeBuilder<Tax> e)
-    {
-        e.ToTable("taxes");
-        e.HasKey(x => x.Id);
-        e.HasIndex(x => new { x.TenantId, x.Code }).IsUnique();
-        e.Property(x => x.Code).HasMaxLength(32).IsRequired();
-        e.Property(x => x.Name).HasMaxLength(128).IsRequired();
-        e.Property(x => x.Rate).HasColumnType("numeric(9,6)");
     }
 }

@@ -10,7 +10,7 @@ namespace Pos.Application.Features.QuickSelects;
 public sealed record QuickSelectDto(
     Guid Id, Guid ShopId, Guid ProductId, int Position,
     string? Label, string? Color,
-    string ProductSku, string ProductName, decimal Price, string Currency, string? ImageUrl);
+    string ProductSku, string ProductName, decimal Price, string? ImageUrl);
 
 public sealed record CreateQuickSelectRequest(Guid ProductId, int? Position, string? Label, string? Color);
 public sealed record UpdateQuickSelectRequest(int Position, string? Label, string? Color);
@@ -45,7 +45,7 @@ public class ListQuickSelectsHandler : IRequestHandler<ListQuickSelectsQuery, IR
                 select new QuickSelectDto(
                     qs.Id, qs.ShopId, qs.ProductId, qs.Position,
                     qs.Label, qs.Color,
-                    p.Sku, p.Name, p.DefaultPriceAmount, p.DefaultPriceCurrency, p.ImageUrl);
+                    p.Sku, p.Name, p.DefaultPriceAmount, p.ImageUrl);
         return await q.ToListAsync(ct);
     }
 }
@@ -80,7 +80,7 @@ public class CreateQuickSelectHandler : IRequestHandler<CreateQuickSelectCommand
 
         return new QuickSelectDto(qs.Id, qs.ShopId, qs.ProductId, qs.Position,
             qs.Label, qs.Color,
-            p.Sku, p.Name, p.DefaultPriceAmount, p.DefaultPriceCurrency, p.ImageUrl);
+            p.Sku, p.Name, p.DefaultPriceAmount, p.ImageUrl);
     }
 }
 
@@ -101,7 +101,7 @@ public class UpdateQuickSelectHandler : IRequestHandler<UpdateQuickSelectCommand
         var p = await _db.Products.AsNoTracking().FirstAsync(x => x.Id == qs.ProductId, ct);
         return new QuickSelectDto(qs.Id, qs.ShopId, qs.ProductId, qs.Position,
             qs.Label, qs.Color,
-            p.Sku, p.Name, p.DefaultPriceAmount, p.DefaultPriceCurrency, p.ImageUrl);
+            p.Sku, p.Name, p.DefaultPriceAmount, p.ImageUrl);
     }
 }
 

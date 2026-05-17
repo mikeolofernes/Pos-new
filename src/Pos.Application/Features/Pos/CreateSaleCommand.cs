@@ -22,7 +22,6 @@ public class CreateSaleValidator : AbstractValidator<CreateSaleCommand>
         RuleFor(x => x.Body.RegisterId).NotEmpty();
         RuleFor(x => x.Body.ShiftId).NotEmpty();
         RuleFor(x => x.Body.WarehouseId).NotEmpty();
-        RuleFor(x => x.Body.Currency).NotEmpty().Length(3);
         RuleFor(x => x.Body.Items).NotEmpty();
         RuleForEach(x => x.Body.Items).ChildRules(i =>
         {
@@ -67,18 +66,12 @@ public class CreateSaleHandler : IRequestHandler<CreateSaleCommand, Result<SaleS
             .Where(p => productIds.Contains(p.Id))
             .ToDictionaryAsync(p => p.Id, ct);
 
-        var taxCodes = products.Values.Select(p => p.TaxCode).Distinct().ToArray();
-        var taxes = await _db.Taxes.AsNoTracking()
-            .Where(t => taxCodes.Contains(t.Code) && t.IsActive)
-            .ToDictionaryAsync(t => t.Code, ct);
-
         var sale = new Sale
         {
             ShopId = b.ShopId,
             RegisterId = b.RegisterId,
             ShiftId = b.ShiftId,
             CustomerId = b.CustomerId,
-            Currency = b.Currency,
             CashierId = _tenant.UserId ?? Guid.Empty,
             Status = SaleStatus.Draft,
             IdempotencyKey = cmd.IdempotencyKey,
@@ -86,7 +79,7 @@ public class CreateSaleHandler : IRequestHandler<CreateSaleCommand, Result<SaleS
             Number = await NextSaleNumberAsync(b.ShopId, b.RegisterId, ct)
         };
 
-        decimal subtotal = 0, discount = 0, tax = 0;
+        decimal subtotal = 0, discount = 0;
         int line = 1;
 
         foreach (var i in b.Items)
@@ -98,26 +91,6 @@ public class CreateSaleHandler : IRequestHandler<CreateSaleCommand, Result<SaleS
             var grossLine = unitPrice * i.Quantity;
             var netLine = grossLine - i.LineDiscount;
 
-            var taxRate = 0m;
-            var inclusive = false;
-            decimal lineTax = 0m;
-
-            if (taxes.TryGetValue(p.TaxCode, out var tx))
-            {
-                taxRate = tx.Rate;
-                inclusive = tx.IsInclusive;
-                if (inclusive)
-                {
-                    lineTax = Math.Round(netLine - (netLine / (1 + taxRate)), 4, MidpointRounding.AwayFromZero);
-                }
-                else
-                {
-                    lineTax = Math.Round(netLine * taxRate, 4, MidpointRounding.AwayFromZero);
-                }
-            }
-
-            var lineTotal = inclusive ? netLine : netLine + lineTax;
-
             sale.Items.Add(new SaleItem
             {
                 LineNumber = line++,
@@ -128,18 +101,14 @@ public class CreateSaleHandler : IRequestHandler<CreateSaleCommand, Result<SaleS
                 Quantity = i.Quantity,
                 UnitPrice = unitPrice,
                 LineDiscount = i.LineDiscount,
-                LineTax = lineTax,
-                TaxRateSnapshot = taxRate,
-                TaxInclusive = inclusive,
-                LineTotal = lineTotal
+                LineTotal = netLine
             });
 
-            subtotal += inclusive ? (netLine - lineTax) : netLine;
+            subtotal += netLine;
             discount += i.LineDiscount;
-            tax += lineTax;
         }
 
-        var total = subtotal + tax;
+        var total = subtotal;
         var tendered = b.Payments.Sum(p => p.Amount);
         if (tendered < total)
             return Error.Validation("sale.payment.insufficient",
@@ -147,7 +116,6 @@ public class CreateSaleHandler : IRequestHandler<CreateSaleCommand, Result<SaleS
 
         sale.Subtotal = subtotal;
         sale.DiscountTotal = discount;
-        sale.TaxTotal = tax;
         sale.Total = total;
         sale.TenderedTotal = tendered;
         sale.ChangeDue = tendered - total;
@@ -160,7 +128,6 @@ public class CreateSaleHandler : IRequestHandler<CreateSaleCommand, Result<SaleS
             {
                 Method = p.Method,
                 Amount = p.Amount,
-                Currency = b.Currency,
                 ExternalReference = p.ExternalReference,
                 Status = PaymentStatus.Captured
             });
@@ -198,6 +165,6 @@ public class CreateSaleHandler : IRequestHandler<CreateSaleCommand, Result<SaleS
     }
 
     private static SaleSummary Map(Sale s) =>
-        new(s.Id, s.Number, s.Subtotal, s.DiscountTotal, s.TaxTotal, s.Total,
+        new(s.Id, s.Number, s.Subtotal, s.DiscountTotal, s.Total,
             s.TenderedTotal, s.ChangeDue, s.Status.ToString(), s.CompletedAt ?? s.CreatedAt);
 }
