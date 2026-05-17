@@ -28,8 +28,8 @@ public class ApiClient
 
     private static T? Des<T>(string body) where T : class
     {
-        try { return JsonSerializer.Deserialize<T>(body, _json); }
-        catch { return null; }
+        if (string.IsNullOrWhiteSpace(body)) return null;
+        return JsonSerializer.Deserialize<T>(body, _json);
     }
 
     private static string? ExtractError(string body, string? reason)
