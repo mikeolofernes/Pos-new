@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "mudblazor": {
+      "source": "stuartf303/vandaemon",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/mudblazor/SKILL.md",
+      "computedHash": "5906338a967c53d87b40290f2886510b8936de0a720bc7242c86b0770230ca9d"
+    }
+  }
+}
