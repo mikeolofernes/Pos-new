@@ -30,8 +30,9 @@ public class ApiClient
     // ---- Auth ----
     public async Task<LoginResponse?> LoginAsync(LoginRequest body, CancellationToken ct = default)
     {
+        LastError = null;
         var r = await _http.PostAsJsonAsync("/api/v1/auth/login", body, ct);
-        if (!r.IsSuccessStatusCode) return null;
+        if (!r.IsSuccessStatusCode) { LastError = await ReadErrorAsync(r, ct); return null; }
         return await r.Content.ReadFromJsonAsync<LoginResponse>(cancellationToken: ct);
     }
 

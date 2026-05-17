@@ -56,7 +56,7 @@
                 _model.TenantSlug.Trim().ToLowerInvariant(),
                 _model.Email.Trim().ToLowerInvariant(),
                 _model.Password, "browser"));
-            if (resp is null) { Snackbar.Add("Invalid credentials", Severity.Error); return; }
+            if (resp is null) { Snackbar.Add(Api.LastError ?? "Invalid credentials", Severity.Error); return; }
             await Auth.SetAsync(resp);
             Snackbar.Add($"Welcome, {resp.DisplayName}", Severity.Success);
             Nav.NavigateTo("/pos");
