@@ -9,11 +9,11 @@ using Pos.Domain.Tenancy;
 namespace Pos.Application.Features.Tenants;
 
 public sealed record TenantDto(
-    Guid Id, string Slug, string Name, string CountryCode, string DefaultCurrency,
-    string TimeZoneId, string Status, DateTimeOffset CreatedAt);
+    Guid Id, string Slug, string Name, string CountryCode,
+    string Status, DateTimeOffset CreatedAt);
 
 public sealed record CreateTenantRequest(
-    string Slug, string Name, string CountryCode, string DefaultCurrency, string TimeZoneId,
+    string Slug, string Name, string CountryCode,
     string AdminEmail, string AdminDisplayName, string AdminPassword);
 
 public sealed record ListTenantsQuery : IRequest<IReadOnlyList<TenantDto>>;
@@ -26,7 +26,6 @@ public class CreateTenantValidator : AbstractValidator<CreateTenantCommand>
         RuleFor(x => x.Body.Slug).NotEmpty().MaximumLength(64).Matches("^[a-z0-9-]+$");
         RuleFor(x => x.Body.Name).NotEmpty().MaximumLength(256);
         RuleFor(x => x.Body.CountryCode).NotEmpty().Length(2);
-        RuleFor(x => x.Body.DefaultCurrency).NotEmpty().Length(3);
         RuleFor(x => x.Body.AdminEmail).NotEmpty().EmailAddress();
         RuleFor(x => x.Body.AdminPassword).NotEmpty().MinimumLength(8);
         RuleFor(x => x.Body.AdminDisplayName).NotEmpty().MaximumLength(128);
@@ -42,8 +41,8 @@ public class ListTenantsHandler : IRequestHandler<ListTenantsQuery, IReadOnlyLis
         await _db.Tenants.IgnoreQueryFilters().AsNoTracking()
             .Where(t => t.DeletedAt == null)
             .OrderBy(t => t.Name)
-            .Select(t => new TenantDto(t.Id, t.Slug, t.Name, t.CountryCode, t.DefaultCurrency,
-                t.TimeZoneId, t.Status.ToString(), t.CreatedAt))
+            .Select(t => new TenantDto(t.Id, t.Slug, t.Name, t.CountryCode,
+                t.Status.ToString(), t.CreatedAt))
             .ToListAsync(ct);
 }
 
@@ -64,8 +63,6 @@ public class CreateTenantHandler : IRequestHandler<CreateTenantCommand, Result<T
             Slug = b.Slug,
             Name = b.Name,
             CountryCode = b.CountryCode,
-            DefaultCurrency = b.DefaultCurrency,
-            TimeZoneId = b.TimeZoneId,
             Status = TenantStatus.Active,
             IsolationMode = TenantIsolationMode.Pooled
         };
@@ -86,7 +83,7 @@ public class CreateTenantHandler : IRequestHandler<CreateTenantCommand, Result<T
 
         await _db.SaveChangesAsync(ct);
 
-        return new TenantDto(t.Id, t.Slug, t.Name, t.CountryCode, t.DefaultCurrency,
-            t.TimeZoneId, t.Status.ToString(), t.CreatedAt);
+        return new TenantDto(t.Id, t.Slug, t.Name, t.CountryCode,
+            t.Status.ToString(), t.CreatedAt);
     }
 }

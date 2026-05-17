@@ -1,4 +1,3 @@
-using Pos.BuildingBlocks;
 using Pos.Domain.Common;
 
 namespace Pos.Domain.Catalog;
@@ -25,17 +24,9 @@ public class Product : TenantEntity, IShopEntity
     public bool TrackBatches { get; set; }
     public bool TrackSerials { get; set; }
     public decimal DefaultPriceAmount { get; set; }
-    public string DefaultPriceCurrency { get; set; } = "USD";
     public decimal? DefaultCost { get; set; }
-    public string TaxCode { get; set; } = "standard";
     public string? ImageUrl { get; set; }
     public bool IsActive { get; set; } = true;
-
-    public Money DefaultPrice
-    {
-        get => new(DefaultPriceAmount, DefaultPriceCurrency);
-        set { DefaultPriceAmount = value.Amount; DefaultPriceCurrency = value.Currency; }
-    }
 }
 
 public class ProductVariant : TenantEntity
@@ -56,13 +47,4 @@ public class Barcode : TenantEntity
     public string Code { get; set; } = default!;
     public string Symbology { get; set; } = "EAN13";
     public bool IsPrimary { get; set; }
-}
-
-public class Tax : TenantEntity
-{
-    public string Code { get; set; } = default!;            // matches Product.TaxCode
-    public string Name { get; set; } = default!;
-    public decimal Rate { get; set; }                       // 0.075 = 7.5%
-    public bool IsInclusive { get; set; }
-    public bool IsActive { get; set; } = true;
 }

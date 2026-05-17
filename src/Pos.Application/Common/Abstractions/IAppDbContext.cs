@@ -29,7 +29,6 @@ public interface IAppDbContext
     DbSet<Product> Products { get; }
     DbSet<ProductVariant> ProductVariants { get; }
     DbSet<Barcode> Barcodes { get; }
-    DbSet<Tax> Taxes { get; }
     DbSet<QuickSelect> QuickSelects { get; }
 
     DbSet<InventoryMovement> InventoryMovements { get; }

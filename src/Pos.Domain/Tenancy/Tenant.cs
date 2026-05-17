@@ -12,8 +12,6 @@ public class Tenant : IEntity
     public string Slug { get; set; } = default!;
     public string Name { get; set; } = default!;
     public string CountryCode { get; set; } = "US";
-    public string DefaultCurrency { get; set; } = "USD";
-    public string TimeZoneId { get; set; } = "UTC";
     public TenantStatus Status { get; set; } = TenantStatus.Trial;
     public TenantIsolationMode IsolationMode { get; set; } = TenantIsolationMode.Pooled;
     public string? DedicatedConnectionString { get; set; }

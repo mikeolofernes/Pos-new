@@ -7,15 +7,8 @@
         <MudTextField @bind-Value="_name" Label="Name" Variant="Variant.Outlined" Required="true" Class="mb-3" />
         <MudTextField @bind-Value="_description" Label="Description" Variant="Variant.Outlined"
                       Lines="2" Class="mb-3" />
-        <MudGrid Spacing="2" Class="mb-3">
-            <MudItem xs="8">
-                <MudNumericField @bind-Value="_price" Label="Price" Variant="Variant.Outlined" Format="N2" Min="0" />
-            </MudItem>
-            <MudItem xs="4">
-                <MudTextField @bind-Value="_currency" Label="Currency" Variant="Variant.Outlined" />
-            </MudItem>
-        </MudGrid>
-        <MudTextField @bind-Value="_taxCode" Label="Tax code" Variant="Variant.Outlined" Class="mb-3" />
+        <MudNumericField @bind-Value="_price" Label="Price" Variant="Variant.Outlined"
+                         Format="N2" Min="0" Class="mb-3" />
         <MudTextField @bind-Value="_imageUrl" Label="Image URL"
                       Placeholder="https://…"
                       Variant="Variant.Outlined" Class="mb-2" />
@@ -59,8 +52,6 @@
     private string? _description;
     private Guid? _categoryId;
     private decimal _price;
-    private string _currency = "USD";
-    private string _taxCode = "standard";
     private string? _imageUrl;
     private bool _trackInventory = true;
     private bool _isActive = true;
@@ -75,8 +66,6 @@
             _description = Existing.Description;
             _categoryId = Existing.CategoryId;
             _price = Existing.Price;
-            _currency = Existing.Currency;
-            _taxCode = Existing.TaxCode;
             _imageUrl = Existing.ImageUrl;
             _trackInventory = Existing.TrackInventory;
             _isActive = Existing.IsActive;
@@ -91,8 +80,8 @@
         if (_isEdit)
         {
             MudDialog.Close(DialogResult.Ok(new UpdateProductRequest(
-                _name.Trim(), _description, _categoryId, _price, _currency.Trim(),
-                _taxCode.Trim(), string.IsNullOrWhiteSpace(_imageUrl) ? null : _imageUrl.Trim(),
+                _name.Trim(), _description, _categoryId, _price,
+                string.IsNullOrWhiteSpace(_imageUrl) ? null : _imageUrl.Trim(),
                 _trackInventory, _isActive)));
         }
         else
@@ -100,7 +89,7 @@
             if (string.IsNullOrWhiteSpace(_sku)) return;
             MudDialog.Close(DialogResult.Ok(new CreateProductRequest(
                 _sku.Trim(), _name.Trim(), _description, _categoryId,
-                _price, _currency.Trim(), _taxCode.Trim(),
+                _price,
                 string.IsNullOrWhiteSpace(_imageUrl) ? null : _imageUrl.Trim(), _trackInventory)));
         }
     }

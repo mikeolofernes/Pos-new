@@ -13,9 +13,8 @@ public class ShopConfig : IEntityTypeConfiguration<Shop>
         e.HasIndex(x => new { x.TenantId, x.Code }).IsUnique();
         e.Property(x => x.Code).HasMaxLength(32).IsRequired();
         e.Property(x => x.Name).HasMaxLength(256).IsRequired();
-        e.Property(x => x.Currency).HasMaxLength(3).IsRequired();
-        e.Property(x => x.TimeZoneId).HasMaxLength(64).IsRequired();
-        e.Property(x => x.CountryCode).HasMaxLength(2).IsRequired();    }
+        e.Property(x => x.CountryCode).HasMaxLength(2).IsRequired();
+    }
 }
 
 public class RegisterConfig : IEntityTypeConfiguration<Register>

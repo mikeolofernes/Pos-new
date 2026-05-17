@@ -5,17 +5,7 @@
         <MudTextField @bind-Value="_slug" Label="Slug (lowercase, no spaces)"
                       Variant="Variant.Outlined" Required="true" Class="mb-3" />
         <MudTextField @bind-Value="_name" Label="Organisation name" Variant="Variant.Outlined" Required="true" Class="mb-3" />
-        <MudGrid Spacing="2" Class="mb-3">
-            <MudItem xs="4">
-                <MudTextField @bind-Value="_country" Label="Country" Variant="Variant.Outlined" />
-            </MudItem>
-            <MudItem xs="4">
-                <MudTextField @bind-Value="_currency" Label="Currency" Variant="Variant.Outlined" />
-            </MudItem>
-            <MudItem xs="4">
-                <MudTextField @bind-Value="_timeZone" Label="Time zone" Variant="Variant.Outlined" />
-            </MudItem>
-        </MudGrid>
+        <MudTextField @bind-Value="_country" Label="Country" Variant="Variant.Outlined" Class="mb-3" />
         <MudDivider Class="my-3" />
         <MudText Typo="Typo.subtitle2" Class="mb-2">Initial admin user</MudText>
         <MudTextField @bind-Value="_adminEmail" Label="Admin email" Variant="Variant.Outlined" Required="true" Class="mb-3" />
@@ -35,8 +25,6 @@
     private string _slug = "";
     private string _name = "";
     private string _country = "US";
-    private string _currency = "USD";
-    private string _timeZone = "UTC";
     private string _adminEmail = "";
     private string _adminName = "";
     private string _adminPassword = "";
@@ -49,8 +37,7 @@
             || string.IsNullOrWhiteSpace(_adminEmail) || string.IsNullOrWhiteSpace(_adminPassword)
             || string.IsNullOrWhiteSpace(_adminName)) return;
         MudDialog.Close(DialogResult.Ok(new CreateTenantRequest(
-            _slug.Trim().ToLowerInvariant(), _name.Trim(),
-            _country.Trim(), _currency.Trim(), _timeZone.Trim(),
+            _slug.Trim().ToLowerInvariant(), _name.Trim(), _country.Trim(),
             _adminEmail.Trim(), _adminName.Trim(), _adminPassword)));
     }
 }

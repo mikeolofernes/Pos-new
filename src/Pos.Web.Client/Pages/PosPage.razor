@@ -55,7 +55,7 @@
                             </div>
                             <div class="pos-tile-body pa-2">
                                 <MudText Typo="Typo.subtitle2" Class="text-truncate">@(q.Label ?? q.ProductName)</MudText>
-                                <MudText Typo="Typo.body2" Color="Color.Primary">@FormatMoney(q.Price, q.Currency)</MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Primary">@FormatMoney(q.Price)</MudText>
                             </div>
                         </MudPaper>
                     }
@@ -90,7 +90,7 @@
                             <div class="pos-tile-body pa-2">
                                 <MudText Typo="Typo.subtitle2" Class="text-truncate">@p.Name</MudText>
                                 <MudText Typo="Typo.caption" Color="Color.Default" Class="text-muted">@p.Sku</MudText>
-                                <MudText Typo="Typo.body2" Color="Color.Primary">@FormatMoney(p.Price, p.Currency)</MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Primary">@FormatMoney(p.Price)</MudText>
                             </div>
                         </MudPaper>
                     }
@@ -120,7 +120,7 @@
                         <div class="d-flex align-items-center">
                             <div class="flex-grow-1">
                                 <MudText Typo="Typo.body2" Class="fw-semibold">@line.Product.Name</MudText>
-                                <MudText Typo="Typo.caption" Class="text-muted">@FormatMoney(line.UnitPrice, line.Currency) ea</MudText>
+                                <MudText Typo="Typo.caption" Class="text-muted">@FormatMoney(line.UnitPrice) ea</MudText>
                             </div>
                             <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small"
                                            OnClick="@(() => ChangeQty(idx, -1))" />
@@ -128,7 +128,7 @@
                             <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" Color="Color.Primary"
                                            OnClick="@(() => ChangeQty(idx, 1))" />
                             <MudText Class="ms-3" Style="min-width:80px;text-align:right;">
-                                @FormatMoney(line.Quantity * line.UnitPrice, line.Currency)
+                                @FormatMoney(line.Quantity * line.UnitPrice)
                             </MudText>
                         </div>
                     </MudListItem>
@@ -144,7 +144,7 @@
             <div class="pa-3 border-top" style="background:#fafbfc">
                 <div class="d-flex justify-content-between">
                     <MudText Typo="Typo.h6">Total</MudText>
-                    <MudText Typo="Typo.h6">@FormatMoney(Total, Currency)</MudText>
+                    <MudText Typo="Typo.h6">@FormatMoney(Total)</MudText>
                 </div>
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large"
                            FullWidth="true" Class="mt-3"
@@ -166,7 +166,7 @@
 </MudGrid>
 
 @code {
-    private sealed record Line(ProductDto Product, decimal Quantity, decimal UnitPrice, string Currency);
+    private sealed record Line(ProductDto Product, decimal Quantity, decimal UnitPrice);
 
     private List<ProductDto> _products = new();
     private List<QuickSelectDto> _quickSelects = new();
@@ -186,10 +186,8 @@
                 p.Name.Contains(_search, StringComparison.OrdinalIgnoreCase) ||
                 p.Sku.Contains(_search, StringComparison.OrdinalIgnoreCase)).ToList();
 
-    // Prices are tax-inclusive (SRP), so the cart total is just the sum of lines.
     private decimal Subtotal => _cart.Sum(l => l.Quantity * l.UnitPrice);
     private decimal Total => Subtotal;
-    private string Currency => _cart.FirstOrDefault()?.Currency ?? "USD";
 
     protected override async Task OnInitializedAsync()
     {
@@ -246,7 +244,7 @@
     {
         var idx = _cart.FindIndex(l => l.Product.Id == p.Id);
         if (idx >= 0) _cart[idx] = _cart[idx] with { Quantity = _cart[idx].Quantity + 1 };
-        else _cart.Add(new Line(p, 1, p.Price, p.Currency));
+        else _cart.Add(new Line(p, 1, p.Price));
     }
 
     private void AddToCartById(Guid productId)
@@ -281,8 +279,7 @@
     {
         var parameters = new DialogParameters<TenderDialog>
         {
-            { x => x.Total, Total },
-            { x => x.Currency, Currency }
+            { x => x.Total, Total }
         };
         var opts = new DialogOptions { FullWidth = true, MaxWidth = MaxWidth.ExtraSmall };
         var dialog = await Dialogs.ShowAsync<TenderDialog>("Tender", parameters, opts);
@@ -298,7 +295,7 @@
         {
             var req = new CreateSaleRequest(
                 ShopId: _shopId, RegisterId: _registerId, ShiftId: _shiftId, WarehouseId: _warehouseId,
-                CustomerId: null, Currency: Currency,
+                CustomerId: null,
                 Items: _cart.Select(l => new SaleLineRequest(l.Product.Id, null, l.Quantity, l.UnitPrice, 0m)).ToList(),
                 Payments: new[] { new SalePaymentRequest(method, tendered, null) },
                 Notes: null, ClientCompletedAt: DateTimeOffset.UtcNow);
@@ -309,7 +306,7 @@
             {
                 await Outbox.EnqueueAsync("sale", "create", req);
                 _pendingOutbox = await Outbox.PendingCountAsync();
-                Snackbar.Add($"Sale queued offline · change {FormatMoney(tendered - Total, Currency)}", Severity.Info);
+                Snackbar.Add($"Sale queued offline · change {FormatMoney(tendered - Total)}", Severity.Info);
             }
             else
             {
@@ -320,7 +317,7 @@
                     return;
                 }
                 var receipt = await resp.Content.ReadFromJsonAsync<SaleSummary>();
-                Snackbar.Add($"Sale {receipt?.Number} · change {FormatMoney(receipt?.Change ?? 0, Currency)}", Severity.Success);
+                Snackbar.Add($"Sale {receipt?.Number} · change {FormatMoney(receipt?.Change ?? 0)}", Severity.Success);
             }
 
             _cart.Clear();
@@ -337,7 +334,7 @@
         Snackbar.Add($"Synced {n} item(s)", Severity.Success);
     }
 
-    private static string FormatMoney(decimal amount, string currency) => $"{currency} {amount:0.00}";
+    private static string FormatMoney(decimal amount) => $"{amount:0.00}";
 
     public void Dispose() { }
 }

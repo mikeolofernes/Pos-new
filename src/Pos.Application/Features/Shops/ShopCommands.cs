@@ -7,8 +7,8 @@ using Pos.Domain.Shops;
 
 namespace Pos.Application.Features.Shops;
 
-public sealed record CreateShopRequest(string Code, string Name, string Currency, string TimeZoneId, string CountryCode, Guid? TenantId = null);
-public sealed record UpdateShopRequest(string Code, string Name, string Currency, string TimeZoneId, string CountryCode, bool IsActive);
+public sealed record CreateShopRequest(string Code, string Name, string CountryCode, Guid? TenantId = null);
+public sealed record UpdateShopRequest(string Code, string Name, string CountryCode, bool IsActive);
 
 public sealed record CreateShopCommand(CreateShopRequest Body) : IRequest<Result<ShopDto>>;
 public sealed record UpdateShopCommand(Guid Id, UpdateShopRequest Body) : IRequest<Result<ShopDto>>;
@@ -20,7 +20,6 @@ public class CreateShopValidator : AbstractValidator<CreateShopCommand>
     {
         RuleFor(x => x.Body.Code).NotEmpty().MaximumLength(32);
         RuleFor(x => x.Body.Name).NotEmpty().MaximumLength(256);
-        RuleFor(x => x.Body.Currency).NotEmpty().Length(3);
         RuleFor(x => x.Body.CountryCode).NotEmpty().Length(2);
     }
 }
@@ -31,7 +30,6 @@ public class UpdateShopValidator : AbstractValidator<UpdateShopCommand>
     {
         RuleFor(x => x.Body.Code).NotEmpty().MaximumLength(32);
         RuleFor(x => x.Body.Name).NotEmpty().MaximumLength(256);
-        RuleFor(x => x.Body.Currency).NotEmpty().Length(3);
         RuleFor(x => x.Body.CountryCode).NotEmpty().Length(2);
     }
 }
@@ -55,8 +53,6 @@ public class CreateShopHandler : IRequestHandler<CreateShopCommand, Result<ShopD
         {
             Code = b.Code,
             Name = b.Name,
-            Currency = b.Currency,
-            TimeZoneId = b.TimeZoneId,
             CountryCode = b.CountryCode,
             IsActive = true
             // TenantId is auto-populated from request context by SaveChangesAsync
@@ -65,7 +61,7 @@ public class CreateShopHandler : IRequestHandler<CreateShopCommand, Result<ShopD
         if (b.TenantId is { } tid) s.TenantId = tid;
         _db.Shops.Add(s);
         await _db.SaveChangesAsync(ct);
-        return new ShopDto(s.Id, s.Code, s.Name, s.Currency, s.TimeZoneId, s.IsActive);
+        return new ShopDto(s.Id, s.Code, s.Name, s.IsActive);
     }
 }
 
@@ -81,12 +77,10 @@ public class UpdateShopHandler : IRequestHandler<UpdateShopCommand, Result<ShopD
         var b = req.Body;
         s.Code = b.Code;
         s.Name = b.Name;
-        s.Currency = b.Currency;
-        s.TimeZoneId = b.TimeZoneId;
         s.CountryCode = b.CountryCode;
         s.IsActive = b.IsActive;
         await _db.SaveChangesAsync(ct);
-        return new ShopDto(s.Id, s.Code, s.Name, s.Currency, s.TimeZoneId, s.IsActive);
+        return new ShopDto(s.Id, s.Code, s.Name, s.IsActive);
     }
 }
 

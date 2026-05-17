@@ -1,4 +1,3 @@
-using Pos.BuildingBlocks;
 using Pos.Domain.Common;
 
 namespace Pos.Domain.Sales;
@@ -14,10 +13,8 @@ public class Sale : TenantEntity
     public Guid? CustomerId { get; set; }
     public string Number { get; set; } = default!;
     public SaleStatus Status { get; set; } = SaleStatus.Draft;
-    public string Currency { get; set; } = "USD";
     public decimal Subtotal { get; set; }
     public decimal DiscountTotal { get; set; }
-    public decimal TaxTotal { get; set; }
     public decimal Total { get; set; }
     public decimal TenderedTotal { get; set; }
     public decimal ChangeDue { get; set; }
@@ -41,9 +38,6 @@ public class SaleItem : TenantEntity
     public decimal Quantity { get; set; }
     public decimal UnitPrice { get; set; }
     public decimal LineDiscount { get; set; }
-    public decimal LineTax { get; set; }
-    public decimal TaxRateSnapshot { get; set; }
-    public bool TaxInclusive { get; set; }
     public decimal LineTotal { get; set; }
     public Guid? SerialIdSnapshot { get; set; }
     public Guid? BatchIdSnapshot { get; set; }
@@ -54,8 +48,6 @@ public class SalePayment : TenantEntity
     public Guid SaleId { get; set; }
     public string Method { get; set; } = "cash";    // cash, card, wallet, gift_card, store_credit
     public decimal Amount { get; set; }
-    public string Currency { get; set; } = "USD";
-    public decimal FxRate { get; set; } = 1m;
     public string? ExternalReference { get; set; }
     public PaymentStatus Status { get; set; } = PaymentStatus.Captured;
 }

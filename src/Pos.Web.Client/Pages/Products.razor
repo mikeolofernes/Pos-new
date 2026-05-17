@@ -30,7 +30,6 @@
         <MudTh>Name</MudTh>
         <MudTh>Category</MudTh>
         <MudTh Style="text-align:right">Price</MudTh>
-        <MudTh>Tax</MudTh>
         <MudTh>Active</MudTh>
         <MudTh Style="text-align:right">Actions</MudTh>
     </HeaderContent>
@@ -38,8 +37,7 @@
         <MudTd DataLabel="SKU"><code>@context.Sku</code></MudTd>
         <MudTd DataLabel="Name">@context.Name</MudTd>
         <MudTd DataLabel="Category">@CategoryName(context.CategoryId)</MudTd>
-        <MudTd DataLabel="Price" Style="text-align:right">@context.Currency @context.Price.ToString("0.00")</MudTd>
-        <MudTd DataLabel="Tax">@context.TaxCode</MudTd>
+        <MudTd DataLabel="Price" Style="text-align:right">@context.Price.ToString("0.00")</MudTd>
         <MudTd DataLabel="Active">
             @if (context.IsActive)
             { <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Small" /> }

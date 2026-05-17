@@ -5,7 +5,7 @@ using Pos.Domain.Tenancy;
 
 namespace Pos.Application.Features.Shops;
 
-public sealed record ShopDto(Guid Id, string Code, string Name, string Currency, string TimeZoneId, bool IsActive);
+public sealed record ShopDto(Guid Id, string Code, string Name, bool IsActive);
 
 public sealed record ListShopsQuery : IRequest<IReadOnlyList<ShopDto>>;
 
@@ -19,7 +19,7 @@ public class ListShopsHandler : IRequestHandler<ListShopsQuery, IReadOnlyList<Sh
         return await _db.Shops.AsNoTracking()
             .Where(s => s.DeletedAt == null)
             .OrderBy(s => s.Name)
-            .Select(s => new ShopDto(s.Id, s.Code, s.Name, s.Currency, s.TimeZoneId, s.IsActive))
+            .Select(s => new ShopDto(s.Id, s.Code, s.Name, s.IsActive))
             .ToListAsync(ct);
     }
 }
@@ -46,7 +46,7 @@ public class ListMyShopsHandler : IRequestHandler<ListMyShopsQuery, IReadOnlyLis
         return await _db.Shops.AsNoTracking()
             .Where(s => shopIds.Contains(s.Id) && s.DeletedAt == null)
             .OrderBy(s => s.Name)
-            .Select(s => new ShopDto(s.Id, s.Code, s.Name, s.Currency, s.TimeZoneId, s.IsActive))
+            .Select(s => new ShopDto(s.Id, s.Code, s.Name, s.IsActive))
             .ToListAsync(ct);
     }
 }

@@ -14,8 +14,6 @@ public class TenantConfig : IEntityTypeConfiguration<Tenant>
         e.Property(x => x.Slug).HasMaxLength(64).IsRequired();
         e.Property(x => x.Name).HasMaxLength(256).IsRequired();
         e.Property(x => x.CountryCode).HasMaxLength(2).IsRequired();
-        e.Property(x => x.DefaultCurrency).HasMaxLength(3).IsRequired();
-        e.Property(x => x.TimeZoneId).HasMaxLength(64).IsRequired();
         e.Property(x => x.Status).HasConversion<short>();
         e.Property(x => x.IsolationMode).HasConversion<short>();
     }
