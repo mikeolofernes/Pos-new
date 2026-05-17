@@ -88,7 +88,7 @@
         if (result?.Canceled is false && result.Data is CreateUserRequest body)
         {
             var u = await Api.CreateUserAsync(body);
-            if (u is null) { Snackbar.Add("Could not create user (duplicate email?)", Severity.Error); return; }
+            if (u is null) { Snackbar.Add(Api.LastError ?? "Could not create user", Severity.Error); return; }
             Snackbar.Add($"Created {u.Email}", Severity.Success);
             await Reload();
         }
@@ -107,7 +107,7 @@
         if (result?.Canceled is false && result.Data is UpdateUserRequest body)
         {
             var ru = await Api.UpdateUserAsync(u.Id, body);
-            if (ru is null) { Snackbar.Add("Update failed", Severity.Error); return; }
+            if (ru is null) { Snackbar.Add(Api.LastError ?? "Update failed", Severity.Error); return; }
             Snackbar.Add("Saved", Severity.Success);
             await Reload();
         }

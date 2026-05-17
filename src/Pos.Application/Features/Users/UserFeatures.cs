@@ -121,13 +121,14 @@ public class CreateUserHandler : IRequestHandler<CreateUserCommand, Result<UserD
     public async Task<Result<UserDto>> Handle(CreateUserCommand req, CancellationToken ct)
     {
         var b = req.Body;
-        var dup = await _db.Users.AnyAsync(u => u.Email == b.Email, ct);
-        if (dup) return Error.Conflict("user.email.duplicate", $"Email '{b.Email}' already exists");
+        var email = (b.Email ?? "").Trim().ToLowerInvariant();
+        var dup = await _db.Users.AnyAsync(u => u.Email.ToLower() == email, ct);
+        if (dup) return Error.Conflict("user.email.duplicate", $"Email '{email}' already exists");
 
         var u = new User
         {
-            Email = b.Email,
-            DisplayName = b.DisplayName,
+            Email = email,
+            DisplayName = b.DisplayName.Trim(),
             Phone = b.Phone,
             PasswordHash = _hasher.Hash(b.Password),
             IsActive = b.IsActive

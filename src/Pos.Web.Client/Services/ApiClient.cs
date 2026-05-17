@@ -10,6 +10,23 @@ public class ApiClient
 
     public HttpClient Raw => _http;
 
+    /// <summary>Last server error message (from ProblemDetails.detail or status text).</summary>
+    public string? LastError { get; private set; }
+
+    private async Task<string?> ReadErrorAsync(HttpResponseMessage r, CancellationToken ct)
+    {
+        try
+        {
+            var pd = await r.Content.ReadFromJsonAsync<ProblemDetailsLite>(cancellationToken: ct);
+            if (pd is not null && !string.IsNullOrWhiteSpace(pd.Detail)) return pd.Detail;
+            if (pd is not null && !string.IsNullOrWhiteSpace(pd.Title)) return pd.Title;
+        }
+        catch { /* not JSON */ }
+        return r.ReasonPhrase;
+    }
+
+    private sealed record ProblemDetailsLite(string? Title, string? Detail, int? Status);
+
     // ---- Auth ----
     public async Task<LoginResponse?> LoginAsync(LoginRequest body, CancellationToken ct = default)
     {
@@ -65,15 +82,17 @@ public class ApiClient
 
     public async Task<UserDto?> CreateUserAsync(CreateUserRequest body, CancellationToken ct = default)
     {
+        LastError = null;
         var r = await _http.PostAsJsonAsync("/api/v1/users", body, ct);
-        if (!r.IsSuccessStatusCode) return null;
+        if (!r.IsSuccessStatusCode) { LastError = await ReadErrorAsync(r, ct); return null; }
         return await r.Content.ReadFromJsonAsync<UserDto>(cancellationToken: ct);
     }
 
     public async Task<UserDto?> UpdateUserAsync(Guid id, UpdateUserRequest body, CancellationToken ct = default)
     {
+        LastError = null;
         var r = await _http.PutAsJsonAsync($"/api/v1/users/{id}", body, ct);
-        if (!r.IsSuccessStatusCode) return null;
+        if (!r.IsSuccessStatusCode) { LastError = await ReadErrorAsync(r, ct); return null; }
         return await r.Content.ReadFromJsonAsync<UserDto>(cancellationToken: ct);
     }
 
