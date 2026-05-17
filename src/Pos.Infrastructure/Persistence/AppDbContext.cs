@@ -45,10 +45,22 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<AuditEvent> AuditEvents => Set<AuditEvent>();
     public DbSet<OutboxMessage> Outbox => Set<OutboxMessage>();
 
+    // EF Core re-evaluates these properties against the executing DbContext instance at
+    // query time (it replaces Expression.Constant(this) with the live context). Accessing
+    // _tenant here — rather than capturing _tenant directly in the expression — is what
+    // makes the per-request tenant/shop filter work correctly across model caching.
+    internal Guid CurrentTenantId => _tenant.TenantId;
+    internal Guid? CurrentShopId => _tenant.ShopId;
+
     protected override void OnModelCreating(ModelBuilder mb)
     {
         base.OnModelCreating(mb);
         mb.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+
+        // Capture `this` (the DbContext), not _tenant directly. EF Core substitutes the
+        // DbContext constant with the actual executing instance at query time, so each
+        // request reads the correct per-request CurrentTenantId / CurrentShopId.
+        var self = Expression.Constant(this, typeof(AppDbContext));
 
         foreach (var et in mb.Model.GetEntityTypes())
         {
@@ -70,9 +82,7 @@ public class AppDbContext : DbContext, IAppDbContext
                 Expression body = Expression.Equal(
                     Expression.Property(p, "TenantId"),
                     Expression.Convert(
-                        Expression.Property(
-                            Expression.Constant(_tenant),
-                            nameof(ITenantContext.TenantId)),
+                        Expression.Property(self, nameof(CurrentTenantId)),
                         typeof(Guid)));
 
                 if (isTenantOwned)
@@ -87,8 +97,7 @@ public class AppDbContext : DbContext, IAppDbContext
                 // management screens without a shop see all rows in the tenant.
                 if (isShopOwned)
                 {
-                    var ctxShopId = Expression.Property(
-                        Expression.Constant(_tenant), nameof(ITenantContext.ShopId));
+                    var ctxShopId = Expression.Property(self, nameof(CurrentShopId));
                     var hasShop = Expression.NotEqual(ctxShopId, Expression.Constant(null, typeof(Guid?)));
                     var shopMatch = Expression.Equal(
                         Expression.Property(p, "ShopId"),
