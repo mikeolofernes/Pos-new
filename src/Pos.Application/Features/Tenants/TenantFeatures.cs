@@ -95,7 +95,7 @@ public class CreateTenantHandler : IRequestHandler<CreateTenantCommand, Result<T
         var admin = new User
         {
             TenantId = t.Id,
-            Email = b.AdminEmail,
+            Email = b.AdminEmail.Trim().ToLowerInvariant(),
             DisplayName = b.AdminDisplayName,
             PasswordHash = _hasher.Hash(b.AdminPassword),
             IsActive = true

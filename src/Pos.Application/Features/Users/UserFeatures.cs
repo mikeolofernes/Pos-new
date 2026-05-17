@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Pos.Application.Common.Abstractions;
 using Pos.BuildingBlocks;
 using Pos.Domain.Identity;
+using Pos.Domain.Tenancy;
 
 namespace Pos.Application.Features.Users;
 
@@ -48,7 +49,7 @@ internal static class UserShopRoleSync
 {
     /// <summary>Sync UserShopRole rows for a user: add missing, soft-delete removed.</summary>
     public static async Task SyncAsync(
-        IAppDbContext db, Guid userId, IReadOnlyList<Guid> wantedShopIds, CancellationToken ct)
+        IAppDbContext db, Guid tenantId, Guid userId, IReadOnlyList<Guid> wantedShopIds, CancellationToken ct)
     {
         // Default role for newly assigned shops: prefer "Cashier", fall back to "Admin".
         var defaultRole = await db.Roles.AsNoTracking()
@@ -71,6 +72,7 @@ internal static class UserShopRoleSync
         {
             db.UserShopRoles.Add(new UserShopRole
             {
+                TenantId = tenantId,
                 UserId = userId,
                 ShopId = shopId,
                 RoleId = defaultRole.Id
@@ -116,17 +118,22 @@ public class CreateUserHandler : IRequestHandler<CreateUserCommand, Result<UserD
 {
     private readonly IAppDbContext _db;
     private readonly IPasswordHasher _hasher;
-    public CreateUserHandler(IAppDbContext db, IPasswordHasher hasher) { _db = db; _hasher = hasher; }
+    private readonly ITenantContext _tenant;
+
+    public CreateUserHandler(IAppDbContext db, IPasswordHasher hasher, ITenantContext tenant)
+    { _db = db; _hasher = hasher; _tenant = tenant; }
 
     public async Task<Result<UserDto>> Handle(CreateUserCommand req, CancellationToken ct)
     {
         var b = req.Body;
+        var tenantId = _tenant.TenantId;
         var email = (b.Email ?? "").Trim().ToLowerInvariant();
         var dup = await _db.Users.AnyAsync(u => u.Email.ToLower() == email, ct);
         if (dup) return Error.Conflict("user.email.duplicate", $"Email '{email}' already exists");
 
         var u = new User
         {
+            TenantId = tenantId,
             Email = email,
             DisplayName = b.DisplayName.Trim(),
             Phone = b.Phone,
@@ -138,7 +145,7 @@ public class CreateUserHandler : IRequestHandler<CreateUserCommand, Result<UserD
 
         if (b.ShopIds is { Count: > 0 })
         {
-            await UserShopRoleSync.SyncAsync(_db, u.Id, b.ShopIds, ct);
+            await UserShopRoleSync.SyncAsync(_db, tenantId, u.Id, b.ShopIds, ct);
             await _db.SaveChangesAsync(ct);
         }
 
@@ -151,7 +158,10 @@ public class UpdateUserHandler : IRequestHandler<UpdateUserCommand, Result<UserD
 {
     private readonly IAppDbContext _db;
     private readonly IPasswordHasher _hasher;
-    public UpdateUserHandler(IAppDbContext db, IPasswordHasher hasher) { _db = db; _hasher = hasher; }
+    private readonly ITenantContext _tenant;
+
+    public UpdateUserHandler(IAppDbContext db, IPasswordHasher hasher, ITenantContext tenant)
+    { _db = db; _hasher = hasher; _tenant = tenant; }
 
     public async Task<Result<UserDto>> Handle(UpdateUserCommand req, CancellationToken ct)
     {
@@ -164,7 +174,7 @@ public class UpdateUserHandler : IRequestHandler<UpdateUserCommand, Result<UserD
         if (!string.IsNullOrEmpty(b.NewPassword)) u.PasswordHash = _hasher.Hash(b.NewPassword);
 
         if (b.ShopIds is not null)
-            await UserShopRoleSync.SyncAsync(_db, u.Id, b.ShopIds, ct);
+            await UserShopRoleSync.SyncAsync(_db, _tenant.TenantId, u.Id, b.ShopIds, ct);
 
         await _db.SaveChangesAsync(ct);
 
