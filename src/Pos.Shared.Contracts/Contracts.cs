@@ -31,15 +31,19 @@ public sealed record UpdateShopRequest(
 // ---- Users ----
 public sealed record UserDto(
     Guid Id, string Email, string DisplayName, string? Phone, bool IsActive,
-    DateTimeOffset? LastLoginAt, DateTimeOffset CreatedAt, IReadOnlyList<Guid> ShopIds);
+    DateTimeOffset? LastLoginAt, DateTimeOffset CreatedAt,
+    Guid? RoleId, string? RoleName, IReadOnlyList<Guid> ShopIds);
 
 public sealed record CreateUserRequest(
     string Email, string DisplayName, string? Phone, string Password, bool IsActive,
-    IReadOnlyList<Guid>? ShopIds = null);
+    Guid? RoleId = null, IReadOnlyList<Guid>? ShopIds = null);
 
 public sealed record UpdateUserRequest(
     string DisplayName, string? Phone, bool IsActive, string? NewPassword,
-    IReadOnlyList<Guid>? ShopIds = null);
+    Guid? RoleId = null, IReadOnlyList<Guid>? ShopIds = null);
+
+// ---- Roles ----
+public sealed record RoleDto(Guid Id, string Name, IReadOnlyList<string> Permissions, bool IsSystem);
 
 // ---- Categories ----
 public sealed record CategoryDto(Guid Id, Guid? ParentId, string Name, string Slug);

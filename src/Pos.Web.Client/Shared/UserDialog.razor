@@ -13,6 +13,14 @@
                       Variant="Variant.Outlined" InputType="InputType.Password" Class="mb-3"
                       HelperText="At least 8 characters"
                       Validation="@(new Func<string, string?>(ValidatePassword))" />
+        <MudSelect T="Guid?" @bind-Value="_roleId" Label="Role" Variant="Variant.Outlined"
+                   Required="true" Class="mb-3"
+                   ToStringFunc="@(id => Roles.FirstOrDefault(r => r.Id == id)?.Name ?? "Select role…")">
+            @foreach (var r in Roles)
+            {
+                <MudSelectItem T="Guid?" Value="@((Guid?)r.Id)">@r.Name</MudSelectItem>
+            }
+        </MudSelect>
         <MudSelect T="Guid" @bind-SelectedValues="_selectedShops" MultiSelection="true"
                    Label="Shops" Variant="Variant.Outlined"
                    SelectAll="true" SelectAllText="Select all shops" Class="mb-3"
@@ -34,6 +42,7 @@
     [CascadingParameter] private MudDialogInstance MudDialog { get; set; } = default!;
     [Parameter] public UserDto? Existing { get; set; }
     [Parameter] public IReadOnlyList<ShopDto> Shops { get; set; } = Array.Empty<ShopDto>();
+    [Parameter] public IReadOnlyList<RoleDto> Roles { get; set; } = Array.Empty<RoleDto>();
 
     private bool _isEdit;
     private string _email = "";
@@ -41,6 +50,7 @@
     private string? _phone;
     private string _password = "";
     private bool _isActive = true;
+    private Guid? _roleId;
     private IEnumerable<Guid> _selectedShops = Array.Empty<Guid>();
 
     protected override void OnInitialized()
@@ -52,7 +62,14 @@
             _displayName = Existing.DisplayName;
             _phone = Existing.Phone;
             _isActive = Existing.IsActive;
+            _roleId = Existing.RoleId;
             _selectedShops = Existing.ShopIds.ToList();
+        }
+        else
+        {
+            // Default new users to "Cashier" if available.
+            _roleId = Roles.FirstOrDefault(r => string.Equals(r.Name, "Cashier", StringComparison.OrdinalIgnoreCase))?.Id
+                      ?? Roles.FirstOrDefault()?.Id;
         }
     }
 
@@ -76,20 +93,23 @@
     private void Submit()
     {
         if (string.IsNullOrWhiteSpace(_displayName)) return;
+        if (_roleId is null) return;
         var shopIds = _selectedShops.ToList();
         if (_isEdit)
         {
             if (!string.IsNullOrEmpty(_password) && _password.Length < 8) return;
             MudDialog.Close(DialogResult.Ok(new UpdateUserRequest(
                 _displayName.Trim(), _phone, _isActive,
-                string.IsNullOrWhiteSpace(_password) ? null : _password, shopIds)));
+                string.IsNullOrWhiteSpace(_password) ? null : _password,
+                _roleId, shopIds)));
         }
         else
         {
             if (ValidateEmail(_email) is not null) return;
             if (ValidatePassword(_password) is not null) return;
             MudDialog.Close(DialogResult.Ok(new CreateUserRequest(
-                _email.Trim().ToLowerInvariant(), _displayName.Trim(), _phone, _password, _isActive, shopIds)));
+                _email.Trim().ToLowerInvariant(), _displayName.Trim(), _phone, _password, _isActive,
+                _roleId, shopIds)));
         }
     }
 }

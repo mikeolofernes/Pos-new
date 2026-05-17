@@ -28,6 +28,7 @@
     <HeaderContent>
         <MudTh>Email</MudTh>
         <MudTh>Name</MudTh>
+        <MudTh>Role</MudTh>
         <MudTh>Phone</MudTh>
         <MudTh>Active</MudTh>
         <MudTh>Last login</MudTh>
@@ -36,6 +37,7 @@
     <RowTemplate>
         <MudTd DataLabel="Email">@context.Email</MudTd>
         <MudTd DataLabel="Name">@context.DisplayName</MudTd>
+        <MudTd DataLabel="Role">@(context.RoleName ?? "—")</MudTd>
         <MudTd DataLabel="Phone">@context.Phone</MudTd>
         <MudTd DataLabel="Active">
             @if (context.IsActive)
@@ -67,10 +69,12 @@
         if (!Auth.IsAuthenticated) { Nav.NavigateTo("/login", true); return; }
         if (!Auth.Has("users.manage")) { Nav.NavigateTo("/", true); return; }
         _shops = (await Api.ListShopsAsync()).ToList();
+        _roles = (await Api.ListRolesAsync()).ToList();
         await Reload();
     }
 
     private List<ShopDto> _shops = new();
+    private List<RoleDto> _roles = new();
 
     private async Task Reload()
     {
@@ -81,7 +85,11 @@
 
     private async Task OpenCreate()
     {
-        var parameters = new DialogParameters<UserDialog> { { x => x.Shops, _shops } };
+        var parameters = new DialogParameters<UserDialog>
+        {
+            { x => x.Shops, _shops },
+            { x => x.Roles, _roles }
+        };
         var dialog = await Dialogs.ShowAsync<UserDialog>("New user", parameters,
             new DialogOptions { FullWidth = true, MaxWidth = MaxWidth.Small });
         var result = await dialog.Result;
@@ -99,7 +107,8 @@
         var parameters = new DialogParameters<UserDialog>
         {
             { x => x.Existing, u },
-            { x => x.Shops, _shops }
+            { x => x.Shops, _shops },
+            { x => x.Roles, _roles }
         };
         var dialog = await Dialogs.ShowAsync<UserDialog>("Edit user", parameters,
             new DialogOptions { FullWidth = true, MaxWidth = MaxWidth.Small });

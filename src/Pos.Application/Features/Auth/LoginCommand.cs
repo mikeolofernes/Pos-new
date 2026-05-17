@@ -51,22 +51,12 @@ public class LoginHandler : IRequestHandler<LoginCommand, Result<LoginResult>>
         if (!_hasher.Verify(req.Password, user.PasswordHash))
             return Error.Unauthorized("auth.invalid", "Invalid credentials");
 
-        // Repair any UserShopRole rows that were saved with TenantId = Guid.Empty (pre-fix data).
-        var staleRoles = await _db.UserShopRoles.IgnoreQueryFilters()
-            .Where(r => r.UserId == user.Id && r.TenantId == Guid.Empty)
-            .ToListAsync(ct);
-        if (staleRoles.Count > 0)
-        {
-            foreach (var sr in staleRoles) sr.TenantId = tenant.Id;
-            await _db.SaveChangesAsync(ct);
-        }
-
-        var permissions = await _db.UserShopRoles.IgnoreQueryFilters().AsNoTracking()
-            .Where(usr => usr.TenantId == tenant.Id && usr.UserId == user.Id)
-            .Join(_db.Roles.IgnoreQueryFilters(), usr => usr.RoleId, r => r.Id, (usr, r) => r.Permissions)
-            .ToListAsync(ct);
-
-        var perms = permissions.SelectMany(p => p).Distinct().ToArray();
+        // Permissions come from the user's directly-assigned role.
+        var role = user.RoleId is { } rid
+            ? await _db.Roles.IgnoreQueryFilters().AsNoTracking()
+                .FirstOrDefaultAsync(r => r.Id == rid, ct)
+            : null;
+        var perms = role?.Permissions ?? Array.Empty<string>();
 
         var device = new Device
         {

@@ -104,6 +104,10 @@ public class ApiClient
     public async Task<bool> DeleteUserAsync(Guid id, CancellationToken ct = default) =>
         (await _http.DeleteAsync($"/api/v1/users/{id}", ct)).IsSuccessStatusCode;
 
+    // ---- Roles ----
+    public async Task<IReadOnlyList<RoleDto>> ListRolesAsync(CancellationToken ct = default) =>
+        await SafeGetAsync<IReadOnlyList<RoleDto>>("/api/v1/roles", ct) ?? Array.Empty<RoleDto>();
+
     // ---- Categories ----
     public async Task<IReadOnlyList<CategoryDto>> ListCategoriesAsync(CancellationToken ct = default) =>
         await SafeGetAsync<IReadOnlyList<CategoryDto>>("/api/v1/categories", ct) ?? Array.Empty<CategoryDto>();

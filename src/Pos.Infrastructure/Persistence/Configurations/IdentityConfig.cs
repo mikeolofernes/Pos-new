@@ -11,6 +11,7 @@ public class UserConfig : IEntityTypeConfiguration<User>
         e.ToTable("users");
         e.HasKey(x => x.Id);
         e.HasIndex(x => new { x.TenantId, x.Email }).IsUnique();
+        e.HasIndex(x => x.RoleId);
         e.Property(x => x.Email).HasMaxLength(256).IsRequired();
         e.Property(x => x.DisplayName).HasMaxLength(256).IsRequired();
         e.Property(x => x.PasswordHash).HasMaxLength(512).IsRequired();

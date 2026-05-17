@@ -7,6 +7,7 @@ public class User : ITenantEntity
 {
     public Guid Id { get; set; } = UlidGuid.NewUlidGuid();
     public Guid TenantId { get; set; }
+    public Guid? RoleId { get; set; }
     public string Email { get; set; } = default!;
     public string? Phone { get; set; }
     public string DisplayName { get; set; } = default!;

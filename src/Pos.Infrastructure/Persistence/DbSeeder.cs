@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Pos.Application.Common.Abstractions;
+using Pos.Application.Features.Tenants;
 using Pos.Domain.Catalog;
 using Pos.Domain.Identity;
 using Pos.Domain.Shops;
@@ -40,20 +41,11 @@ public static class DbSeeder
         var warehouse = new Warehouse { TenantId = tenant.Id, ShopId = shop.Id, Code = "WH-MAIN", Name = "Main Warehouse" };
         db.Warehouses.Add(warehouse);
 
-        var adminRole = new Role { TenantId = tenant.Id, Name = "Admin",
-            Permissions = Permissions.All, IsSystem = true };
-        var cashierRole = new Role { TenantId = tenant.Id, Name = "Cashier",
-            Permissions = new[]
-            {
-                Permissions.SalesCreate, Permissions.ProductsRead,
-                Permissions.InventoryRead, Permissions.ShopsRead,
-                Permissions.ShiftsManage
-            } };
-        db.Roles.AddRange(adminRole, cashierRole);
+        var (adminRole, _, cashierRole) = RoleSeeder.SeedSystemRoles(db, tenant.Id);
 
-        var admin = new User { TenantId = tenant.Id, Email = "admin@demo.local",
+        var admin = new User { TenantId = tenant.Id, RoleId = adminRole.Id, Email = "admin@demo.local",
             DisplayName = "Admin", PasswordHash = hasher.Hash("Passw0rd!"), IsActive = true };
-        var cashier = new User { TenantId = tenant.Id, Email = "cashier@demo.local",
+        var cashier = new User { TenantId = tenant.Id, RoleId = cashierRole.Id, Email = "cashier@demo.local",
             DisplayName = "Cashier", PasswordHash = hasher.Hash("Passw0rd!"), IsActive = true };
         db.Users.AddRange(admin, cashier);
 

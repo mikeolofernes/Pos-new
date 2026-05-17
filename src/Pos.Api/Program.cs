@@ -141,6 +141,7 @@ app.MapAuthEndpoints();
 app.MapTenantEndpoints();
 app.MapShopEndpoints();
 app.MapUserEndpoints();
+app.MapRoleEndpoints();
 app.MapCategoryEndpoints();
 app.MapProductEndpoints();
 app.MapQuickSelectEndpoints();

@@ -71,30 +71,12 @@ public class CreateTenantHandler : IRequestHandler<CreateTenantCommand, Result<T
         };
         _db.Tenants.Add(t);
 
-        var adminRole = new Role
-        {
-            TenantId = t.Id,
-            Name = "Admin",
-            Permissions = Permissions.All,
-            IsSystem = true
-        };
-        var cashierRole = new Role
-        {
-            TenantId = t.Id,
-            Name = "Cashier",
-            Permissions = new[]
-            {
-                Permissions.SalesCreate, Permissions.ProductsRead,
-                Permissions.InventoryRead, Permissions.ShopsRead,
-                Permissions.ShiftsManage
-            },
-            IsSystem = true
-        };
-        _db.Roles.AddRange(adminRole, cashierRole);
+        var (adminRole, _, _) = RoleSeeder.SeedSystemRoles(_db, t.Id);
 
         var admin = new User
         {
             TenantId = t.Id,
+            RoleId = adminRole.Id,
             Email = b.AdminEmail.Trim().ToLowerInvariant(),
             DisplayName = b.AdminDisplayName,
             PasswordHash = _hasher.Hash(b.AdminPassword),
