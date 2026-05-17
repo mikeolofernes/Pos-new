@@ -33,6 +33,20 @@ public class ProductConfig : IEntityTypeConfiguration<Product>
         e.Property(x => x.DefaultPriceCurrency).HasMaxLength(3).IsRequired();
         e.Property(x => x.DefaultCost).HasColumnType("numeric(19,4)");
         e.Property(x => x.TaxCode).HasMaxLength(32).IsRequired();
+        e.Property(x => x.ImageUrl).HasMaxLength(1024);
+    }
+}
+
+public class QuickSelectConfig : IEntityTypeConfiguration<QuickSelect>
+{
+    public void Configure(EntityTypeBuilder<QuickSelect> e)
+    {
+        e.ToTable("quick_selects");
+        e.HasKey(x => x.Id);
+        e.HasIndex(x => new { x.TenantId, x.ShopId, x.Position });
+        e.HasIndex(x => new { x.TenantId, x.ShopId, x.ProductId }).IsUnique();
+        e.Property(x => x.Label).HasMaxLength(64);
+        e.Property(x => x.Color).HasMaxLength(16);
     }
 }
 

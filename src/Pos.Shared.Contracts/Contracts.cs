@@ -47,15 +47,26 @@ public sealed record UpdateCategoryRequest(Guid? ParentId, string Name, string S
 // ---- Products ----
 public sealed record ProductDto(
     Guid Id, string Sku, string Name, string? Description, Guid? CategoryId,
-    string Type, decimal Price, string Currency, string TaxCode, bool TrackInventory, bool IsActive);
+    string Type, decimal Price, string Currency, string TaxCode,
+    string? ImageUrl, bool TrackInventory, bool IsActive);
 
 public sealed record CreateProductRequest(
     string Sku, string Name, string? Description, Guid? CategoryId,
-    decimal Price, string Currency, string TaxCode, bool TrackInventory);
+    decimal Price, string Currency, string TaxCode, string? ImageUrl, bool TrackInventory);
 
 public sealed record UpdateProductRequest(
     string Name, string? Description, Guid? CategoryId,
-    decimal Price, string Currency, string TaxCode, bool TrackInventory, bool IsActive);
+    decimal Price, string Currency, string TaxCode, string? ImageUrl,
+    bool TrackInventory, bool IsActive);
+
+// ---- Quick selects (POS shortcut tiles) ----
+public sealed record QuickSelectDto(
+    Guid Id, Guid? ShopId, Guid ProductId, int Position,
+    string? Label, string? Color,
+    string ProductSku, string ProductName, decimal Price, string Currency, string? ImageUrl);
+
+public sealed record CreateQuickSelectRequest(Guid? ShopId, Guid ProductId, int? Position, string? Label, string? Color);
+public sealed record UpdateQuickSelectRequest(int Position, string? Label, string? Color);
 
 public sealed record PageOf<T>(IReadOnlyList<T> Items, int Total, int PageNumber, int PageSize);
 

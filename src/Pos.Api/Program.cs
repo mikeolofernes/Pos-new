@@ -143,6 +143,7 @@ app.MapShopEndpoints();
 app.MapUserEndpoints();
 app.MapCategoryEndpoints();
 app.MapProductEndpoints();
+app.MapQuickSelectEndpoints();
 app.MapInventoryEndpoints();
 app.MapPosEndpoints();
 app.MapSyncEndpoints();

@@ -26,6 +26,7 @@ public class Product : TenantEntity
     public string DefaultPriceCurrency { get; set; } = "USD";
     public decimal? DefaultCost { get; set; }
     public string TaxCode { get; set; } = "standard";
+    public string? ImageUrl { get; set; }
     public bool IsActive { get; set; } = true;
 
     public Money DefaultPrice

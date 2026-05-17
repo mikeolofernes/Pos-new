@@ -36,6 +36,7 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result
         p.DefaultPriceAmount = b.Price;
         p.DefaultPriceCurrency = b.Currency;
         p.TaxCode = b.TaxCode;
+        p.ImageUrl = b.ImageUrl;
         p.TrackInventory = b.TrackInventory;
         p.IsActive = b.IsActive;
 
@@ -43,7 +44,7 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Result
 
         return new ProductDto(p.Id, p.Sku, p.Name, p.Description, p.CategoryId,
             p.Type.ToString(), p.DefaultPriceAmount, p.DefaultPriceCurrency,
-            p.TaxCode, p.TrackInventory, p.IsActive);
+            p.TaxCode, p.ImageUrl, p.TrackInventory, p.IsActive);
     }
 }
 

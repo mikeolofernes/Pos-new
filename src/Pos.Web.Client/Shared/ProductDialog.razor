@@ -16,6 +16,16 @@
             </MudItem>
         </MudGrid>
         <MudTextField @bind-Value="_taxCode" Label="Tax code" Variant="Variant.Outlined" Class="mb-3" />
+        <MudTextField @bind-Value="_imageUrl" Label="Image URL"
+                      Placeholder="https://…"
+                      Variant="Variant.Outlined" Class="mb-2" />
+        @if (!string.IsNullOrWhiteSpace(_imageUrl))
+        {
+            <div class="mb-3" style="text-align:center">
+                <img src="@_imageUrl" alt="preview"
+                     style="max-height:120px;max-width:100%;border-radius:8px;border:1px solid var(--mud-palette-lines-default)" />
+            </div>
+        }
         <MudSelect T="Guid?" @bind-Value="_categoryId" Label="Category"
                    Variant="Variant.Outlined" Clearable="true" Class="mb-3">
             <MudSelectItem T="Guid?" Value="@((Guid?)null)">— None —</MudSelectItem>
@@ -51,6 +61,7 @@
     private decimal _price;
     private string _currency = "USD";
     private string _taxCode = "standard";
+    private string? _imageUrl;
     private bool _trackInventory = true;
     private bool _isActive = true;
 
@@ -66,6 +77,7 @@
             _price = Existing.Price;
             _currency = Existing.Currency;
             _taxCode = Existing.TaxCode;
+            _imageUrl = Existing.ImageUrl;
             _trackInventory = Existing.TrackInventory;
             _isActive = Existing.IsActive;
         }
@@ -80,14 +92,16 @@
         {
             MudDialog.Close(DialogResult.Ok(new UpdateProductRequest(
                 _name.Trim(), _description, _categoryId, _price, _currency.Trim(),
-                _taxCode.Trim(), _trackInventory, _isActive)));
+                _taxCode.Trim(), string.IsNullOrWhiteSpace(_imageUrl) ? null : _imageUrl.Trim(),
+                _trackInventory, _isActive)));
         }
         else
         {
             if (string.IsNullOrWhiteSpace(_sku)) return;
             MudDialog.Close(DialogResult.Ok(new CreateProductRequest(
                 _sku.Trim(), _name.Trim(), _description, _categoryId,
-                _price, _currency.Trim(), _taxCode.Trim(), _trackInventory)));
+                _price, _currency.Trim(), _taxCode.Trim(),
+                string.IsNullOrWhiteSpace(_imageUrl) ? null : _imageUrl.Trim(), _trackInventory)));
         }
     }
 }

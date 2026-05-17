@@ -56,7 +56,23 @@
     gap: 4px;
     cursor: pointer;
     transition: transform .05s, box-shadow .12s;
+    overflow: hidden;
 }
+.pos-tile-image { padding: 0 !important; }
+.pos-tile-img {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 96px;
+    background: #f5f7fb;
+    overflow: hidden;
+}
+.pos-tile-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.pos-tile-body { width: 100%; }
 .pos-tile:hover {
     box-shadow: 0 4px 12px rgba(15, 23, 42, .08);
     border-color: var(--mud-palette-primary);

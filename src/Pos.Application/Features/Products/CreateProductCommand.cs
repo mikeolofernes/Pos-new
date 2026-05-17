@@ -41,13 +41,14 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result
             TrackInventory = b.TrackInventory,
             DefaultPriceAmount = b.Price,
             DefaultPriceCurrency = b.Currency,
-            TaxCode = b.TaxCode
+            TaxCode = b.TaxCode,
+            ImageUrl = b.ImageUrl
         };
         _db.Products.Add(p);
         await _db.SaveChangesAsync(ct);
 
         return new ProductDto(p.Id, p.Sku, p.Name, p.Description, p.CategoryId,
             p.Type.ToString(), p.DefaultPriceAmount, p.DefaultPriceCurrency,
-            p.TaxCode, p.TrackInventory, p.IsActive);
+            p.TaxCode, p.ImageUrl, p.TrackInventory, p.IsActive);
     }
 }

@@ -35,6 +35,7 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<ProductVariant> ProductVariants => Set<ProductVariant>();
     public DbSet<Barcode> Barcodes => Set<Barcode>();
     public DbSet<Tax> Taxes => Set<Tax>();
+    public DbSet<QuickSelect> QuickSelects => Set<QuickSelect>();
     public DbSet<InventoryMovement> InventoryMovements => Set<InventoryMovement>();
     public DbSet<StockBalance> StockBalances => Set<StockBalance>();
     public DbSet<Sale> Sales => Set<Sale>();

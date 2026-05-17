@@ -1,0 +1,133 @@
+@page "/quick-selects"
+@inject ApiClient Api
+@inject AuthState Auth
+@inject NavigationManager Nav
+@inject IDialogService Dialogs
+@inject ISnackbar Snackbar
+
+<PageTitle>Quick selects</PageTitle>
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3">
+    <MudText Typo="Typo.h5">POS quick selects</MudText>
+    <MudSpacer />
+    <MudButton StartIcon="@Icons.Material.Filled.Add"
+               Variant="Variant.Filled" Color="Color.Primary"
+               Disabled="@(!Auth.Has("products.write"))"
+               OnClick="OpenCreate">Pin product</MudButton>
+</MudStack>
+
+<MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Class="mb-3">
+    Pinned products appear as shortcut tiles on the POS page so cashiers can punch
+    them with one tap. Use the arrows to reorder.
+</MudAlert>
+
+<MudTable Items="_items" Loading="_loading" Hover="true" Dense="true"
+          Breakpoint="Breakpoint.Sm" Class="mud-elevation-1">
+    <HeaderContent>
+        <MudTh Style="width:48px">#</MudTh>
+        <MudTh Style="width:60px"></MudTh>
+        <MudTh>Product</MudTh>
+        <MudTh>Label override</MudTh>
+        <MudTh>Shop</MudTh>
+        <MudTh Style="text-align:right">Actions</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="#">@(context.Position + 1)</MudTd>
+        <MudTd DataLabel="Image">
+            @if (!string.IsNullOrEmpty(context.ImageUrl))
+            {
+                <img src="@context.ImageUrl" alt=""
+                     style="height:36px;width:36px;object-fit:cover;border-radius:6px" />
+            }
+        </MudTd>
+        <MudTd DataLabel="Product">
+            <div class="fw-semibold">@context.ProductName</div>
+            <div class="text-muted"><code>@context.ProductSku</code></div>
+        </MudTd>
+        <MudTd DataLabel="Label">@(context.Label ?? "—")</MudTd>
+        <MudTd DataLabel="Shop">@(context.ShopId is null ? "All shops" : ShopName(context.ShopId.Value))</MudTd>
+        <MudTd Style="text-align:right">
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowUpward" Size="Size.Small"
+                           Disabled="@(!Auth.Has("products.write") || _items.IndexOf(context) == 0)"
+                           OnClick="@(() => Move(context, -1))" />
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowDownward" Size="Size.Small"
+                           Disabled="@(!Auth.Has("products.write") || _items.IndexOf(context) == _items.Count - 1)"
+                           OnClick="@(() => Move(context, 1))" />
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                           Disabled="@(!Auth.Has("products.write"))"
+                           OnClick="@(() => Delete(context))" />
+        </MudTd>
+    </RowTemplate>
+    <NoRecordsContent><MudText>No tiles pinned yet.</MudText></NoRecordsContent>
+</MudTable>
+
+@code {
+    private List<QuickSelectDto> _items = new();
+    private List<ProductDto> _products = new();
+    private List<ShopDto> _shops = new();
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Auth.LoadAsync();
+        if (!Auth.IsAuthenticated) { Nav.NavigateTo("/login", true); return; }
+        _shops = (await Api.ListShopsAsync()).ToList();
+        var page = await Api.ListProductsAsync(pageSize: 500);
+        _products = page?.Items.Where(p => p.IsActive).ToList() ?? new();
+        await Reload();
+    }
+
+    private async Task Reload()
+    {
+        _loading = true;
+        _items = (await Api.ListQuickSelectsAsync()).OrderBy(x => x.Position).ToList();
+        _loading = false;
+    }
+
+    private string ShopName(Guid id) => _shops.FirstOrDefault(s => s.Id == id)?.Name ?? "—";
+
+    private async Task OpenCreate()
+    {
+        var parameters = new DialogParameters<QuickSelectDialog>
+        {
+            { x => x.Products, _products },
+            { x => x.Shops, _shops }
+        };
+        var dialog = await Dialogs.ShowAsync<QuickSelectDialog>("Pin product", parameters,
+            new DialogOptions { FullWidth = true, MaxWidth = MaxWidth.Small });
+        var result = await dialog.Result;
+        if (result?.Canceled is false && result.Data is CreateQuickSelectRequest body)
+        {
+            var q = await Api.CreateQuickSelectAsync(body);
+            if (q is null) { Snackbar.Add("Could not pin (already pinned?)", Severity.Error); return; }
+            Snackbar.Add("Pinned", Severity.Success);
+            await Reload();
+        }
+    }
+
+    private async Task Move(QuickSelectDto item, int delta)
+    {
+        var idx = _items.IndexOf(item);
+        var swapIdx = idx + delta;
+        if (swapIdx < 0 || swapIdx >= _items.Count) return;
+        var other = _items[swapIdx];
+
+        var a = await Api.UpdateQuickSelectAsync(item.Id, new UpdateQuickSelectRequest(other.Position, item.Label, item.Color));
+        var b = await Api.UpdateQuickSelectAsync(other.Id, new UpdateQuickSelectRequest(item.Position, other.Label, other.Color));
+        if (a is null || b is null) { Snackbar.Add("Reorder failed", Severity.Error); }
+        await Reload();
+    }
+
+    private async Task Delete(QuickSelectDto q)
+    {
+        var ok = await Dialogs.ShowMessageBox("Unpin tile",
+            $"Remove '{q.ProductName}' from POS shortcuts?", yesText: "Unpin", cancelText: "Cancel");
+        if (ok is not true) return;
+        if (await Api.DeleteQuickSelectAsync(q.Id))
+        {
+            Snackbar.Add("Unpinned", Severity.Info);
+            await Reload();
+        }
+        else Snackbar.Add("Failed", Severity.Error);
+    }
+}

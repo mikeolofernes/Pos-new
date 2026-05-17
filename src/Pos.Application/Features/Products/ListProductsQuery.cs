@@ -35,7 +35,7 @@ public class ListProductsHandler : IRequestHandler<ListProductsQuery, Page<Produ
             .Select(p => new ProductDto(
                 p.Id, p.Sku, p.Name, p.Description, p.CategoryId,
                 p.Type.ToString(), p.DefaultPriceAmount, p.DefaultPriceCurrency,
-                p.TaxCode, p.TrackInventory, p.IsActive))
+                p.TaxCode, p.ImageUrl, p.TrackInventory, p.IsActive))
             .ToListAsync(ct);
 
         return new Page<ProductDto>(items, total, page.Page, page.Take);

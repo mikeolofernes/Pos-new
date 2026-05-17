@@ -34,16 +34,64 @@
             {
                 <MudProgressLinear Indeterminate="true" />
             }
+            else if (string.IsNullOrWhiteSpace(_search))
+            {
+                @* Default view: shortcut tiles (image-first, big touch targets) *@
+                <div class="pos-tiles">
+                    @foreach (var q in _quickSelects)
+                    {
+                        <MudPaper Class="pos-tile pos-tile-image pa-0" Elevation="0" Outlined="true"
+                                  Style="@TileStyle(q.Color)"
+                                  @onclick="() => AddToCartById(q.ProductId)">
+                            <div class="pos-tile-img">
+                                @if (!string.IsNullOrEmpty(q.ImageUrl))
+                                {
+                                    <img src="@q.ImageUrl" alt="@q.ProductName" />
+                                }
+                                else
+                                {
+                                    <MudIcon Icon="@Icons.Material.Filled.Image" Size="Size.Large" Color="Color.Default" />
+                                }
+                            </div>
+                            <div class="pos-tile-body pa-2">
+                                <MudText Typo="Typo.subtitle2" Class="text-truncate">@(q.Label ?? q.ProductName)</MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Primary">@FormatMoney(q.Price, q.Currency)</MudText>
+                            </div>
+                        </MudPaper>
+                    }
+                    @if (_quickSelects.Count == 0)
+                    {
+                        <MudText Class="text-muted pa-3">
+                            No shortcuts yet. Pin products on the
+                            <MudLink Href="/quick-selects">Quick selects</MudLink> page,
+                            or search above to find any product.
+                        </MudText>
+                    }
+                </div>
+            }
             else
             {
+                @* Search active: show full product results *@
                 <div class="pos-tiles">
                     @foreach (var p in Filtered)
                     {
-                        <MudPaper Class="pos-tile pa-3" Elevation="0" Outlined="true" @onclick="() => AddToCart(p)">
-                            <MudText Typo="Typo.subtitle2" Class="text-truncate">@p.Name</MudText>
-                            <MudText Typo="Typo.caption" Color="Color.Default" Class="text-muted">@p.Sku</MudText>
-                            <MudSpacer />
-                            <MudText Typo="Typo.h6" Color="Color.Primary">@FormatMoney(p.Price, p.Currency)</MudText>
+                        <MudPaper Class="pos-tile pos-tile-image pa-0" Elevation="0" Outlined="true"
+                                  @onclick="() => AddToCart(p)">
+                            <div class="pos-tile-img">
+                                @if (!string.IsNullOrEmpty(p.ImageUrl))
+                                {
+                                    <img src="@p.ImageUrl" alt="@p.Name" />
+                                }
+                                else
+                                {
+                                    <MudIcon Icon="@Icons.Material.Filled.Image" Size="Size.Large" Color="Color.Default" />
+                                }
+                            </div>
+                            <div class="pos-tile-body pa-2">
+                                <MudText Typo="Typo.subtitle2" Class="text-truncate">@p.Name</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Default" Class="text-muted">@p.Sku</MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Primary">@FormatMoney(p.Price, p.Currency)</MudText>
+                            </div>
                         </MudPaper>
                     }
                     @if (Filtered.Count == 0)
@@ -130,6 +178,7 @@
     private sealed record Line(ProductDto Product, decimal Quantity, decimal UnitPrice, string Currency);
 
     private List<ProductDto> _products = new();
+    private List<QuickSelectDto> _quickSelects = new();
     private readonly List<Line> _cart = new();
     private string _search = "";
     private bool _loading = true;
@@ -178,6 +227,13 @@
                 _products = page.Items.Where(p => p.IsActive).ToList();
                 await Idb.PutAsync("catalog", "all", _products);
             }
+            try
+            {
+                _quickSelects = (await Api.ListQuickSelectsAsync())
+                    .OrderBy(q => q.Position).ToList();
+                await Idb.PutAsync("catalog", "quick", _quickSelects);
+            }
+            catch { /* tolerate; fall back to plain catalog */ }
             var shops = await Api.ListShopsAsync();
             if (shops.Count > 0)
             {
@@ -191,6 +247,7 @@
         {
             _offline = true;
             _products = (await Idb.GetAsync<List<ProductDto>>("catalog", "all")) ?? new();
+            _quickSelects = (await Idb.GetAsync<List<QuickSelectDto>>("catalog", "quick")) ?? new();
         }
     }
 
@@ -200,6 +257,15 @@
         if (idx >= 0) _cart[idx] = _cart[idx] with { Quantity = _cart[idx].Quantity + 1 };
         else _cart.Add(new Line(p, 1, p.Price, p.Currency));
     }
+
+    private void AddToCartById(Guid productId)
+    {
+        var p = _products.FirstOrDefault(x => x.Id == productId);
+        if (p is not null) AddToCart(p);
+    }
+
+    private static string TileStyle(string? color) =>
+        string.IsNullOrEmpty(color) ? "" : $"border-color:{color};box-shadow:inset 4px 0 0 {color}";
 
     private void ChangeQty(int idx, int delta)
     {

@@ -98,6 +98,30 @@ public class ApiClient
     public async Task<bool> DeleteCategoryAsync(Guid id, CancellationToken ct = default) =>
         (await _http.DeleteAsync($"/api/v1/categories/{id}", ct)).IsSuccessStatusCode;
 
+    // ---- Quick selects (POS tiles) ----
+    public async Task<IReadOnlyList<QuickSelectDto>> ListQuickSelectsAsync(Guid? shopId = null, CancellationToken ct = default)
+    {
+        var url = "/api/v1/quick-selects" + (shopId is null ? "" : $"?shopId={shopId}");
+        return await _http.GetFromJsonAsync<IReadOnlyList<QuickSelectDto>>(url, ct) ?? Array.Empty<QuickSelectDto>();
+    }
+
+    public async Task<QuickSelectDto?> CreateQuickSelectAsync(CreateQuickSelectRequest body, CancellationToken ct = default)
+    {
+        var r = await _http.PostAsJsonAsync("/api/v1/quick-selects", body, ct);
+        if (!r.IsSuccessStatusCode) return null;
+        return await r.Content.ReadFromJsonAsync<QuickSelectDto>(cancellationToken: ct);
+    }
+
+    public async Task<QuickSelectDto?> UpdateQuickSelectAsync(Guid id, UpdateQuickSelectRequest body, CancellationToken ct = default)
+    {
+        var r = await _http.PutAsJsonAsync($"/api/v1/quick-selects/{id}", body, ct);
+        if (!r.IsSuccessStatusCode) return null;
+        return await r.Content.ReadFromJsonAsync<QuickSelectDto>(cancellationToken: ct);
+    }
+
+    public async Task<bool> DeleteQuickSelectAsync(Guid id, CancellationToken ct = default) =>
+        (await _http.DeleteAsync($"/api/v1/quick-selects/{id}", ct)).IsSuccessStatusCode;
+
     // ---- Products ----
     public async Task<PageOf<ProductDto>?> ListProductsAsync(string? q = null, int page = 1, int pageSize = 100, CancellationToken ct = default)
     {
