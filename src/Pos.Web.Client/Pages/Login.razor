@@ -52,7 +52,10 @@
         _busy = true;
         try
         {
-            var resp = await Api.LoginAsync(new LoginRequest(_model.TenantSlug, _model.Email, _model.Password, "browser"));
+            var resp = await Api.LoginAsync(new LoginRequest(
+                _model.TenantSlug.Trim().ToLowerInvariant(),
+                _model.Email.Trim().ToLowerInvariant(),
+                _model.Password, "browser"));
             if (resp is null) { Snackbar.Add("Invalid credentials", Severity.Error); return; }
             await Auth.SetAsync(resp);
             Snackbar.Add($"Welcome, {resp.DisplayName}", Severity.Success);

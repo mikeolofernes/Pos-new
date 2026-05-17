@@ -43,9 +43,10 @@ public class LoginHandler : IRequestHandler<LoginCommand, Result<LoginResult>>
         if (tenant.Status == TenantStatus.Suspended || tenant.Status == TenantStatus.Cancelled)
             return Error.Forbidden("tenant.disabled", "Tenant is not active");
 
+        var email = req.Email.Trim().ToLowerInvariant();
         // Bypass query filter: we don't have a tenant context yet at login time.
         var user = await _db.Users.IgnoreQueryFilters().AsNoTracking()
-            .FirstOrDefaultAsync(u => u.TenantId == tenant.Id && u.Email == req.Email && u.DeletedAt == null, ct);
+            .FirstOrDefaultAsync(u => u.TenantId == tenant.Id && u.Email.ToLower() == email && u.DeletedAt == null, ct);
         if (user is null || !user.IsActive) return Error.Unauthorized("auth.invalid", "Invalid credentials");
         if (!_hasher.Verify(req.Password, user.PasswordHash))
             return Error.Unauthorized("auth.invalid", "Invalid credentials");
