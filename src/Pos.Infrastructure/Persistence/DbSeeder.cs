@@ -67,13 +67,13 @@ public static class DbSeeder
             Name = "Zero Rated", Rate = 0m, IsInclusive = false, IsActive = true });
 
         db.Products.AddRange(
-            new Product { TenantId = tenant.Id, Sku = "COFFEE-12", Name = "Coffee 12oz",
+            new Product { TenantId = tenant.Id, ShopId = shop.Id, Sku ="COFFEE-12", Name = "Coffee 12oz",
                 DefaultPriceAmount = 4.50m, DefaultPriceCurrency = "USD",
                 DefaultCost = 1.10m, TaxCode = "standard", TrackInventory = true },
-            new Product { TenantId = tenant.Id, Sku = "MUFFIN-CHOC", Name = "Chocolate Muffin",
+            new Product { TenantId = tenant.Id, ShopId = shop.Id, Sku ="MUFFIN-CHOC", Name = "Chocolate Muffin",
                 DefaultPriceAmount = 3.25m, DefaultPriceCurrency = "USD",
                 DefaultCost = 0.90m, TaxCode = "standard", TrackInventory = true },
-            new Product { TenantId = tenant.Id, Sku = "WATER-500", Name = "Bottled Water 500ml",
+            new Product { TenantId = tenant.Id, ShopId = shop.Id, Sku ="WATER-500", Name = "Bottled Water 500ml",
                 DefaultPriceAmount = 1.75m, DefaultPriceCurrency = "USD",
                 DefaultCost = 0.40m, TaxCode = "zero", TrackInventory = true });
 

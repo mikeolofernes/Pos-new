@@ -59,7 +59,13 @@ public class CreateCategoryHandler : IRequestHandler<CreateCategoryCommand, Resu
         var dup = await _db.Categories.AnyAsync(c => c.Slug == b.Slug, ct);
         if (dup) return Error.Conflict("category.slug.duplicate", $"Slug '{b.Slug}' already exists");
 
-        var c = new Category { ParentId = b.ParentId, Name = b.Name, Slug = b.Slug };
+        var c = new Category
+        {
+            ParentId = b.ParentId,
+            Name = b.Name,
+            Slug = b.Slug
+            // TenantId + ShopId populated by AppDbContext.SaveChangesAsync.
+        };
         _db.Categories.Add(c);
         await _db.SaveChangesAsync(ct);
         return new CategoryDto(c.Id, c.ParentId, c.Name, c.Slug);

@@ -23,10 +23,6 @@
     [CascadingParameter] private MudDialogInstance MudDialog { get; set; } = default!;
     [Parameter] public IReadOnlyList<ProductDto> Products { get; set; } = Array.Empty<ProductDto>();
 
-    // The tile is always pinned to the cashier's current shop. The parent
-    // page passes that in; tenant is already implicit via the JWT.
-    [Parameter] public Guid? ShopId { get; set; }
-
     private ProductDto? _product;
     private string? _label;
     private string? _color;
@@ -50,7 +46,7 @@
     {
         if (_product is null) return;
         MudDialog.Close(DialogResult.Ok(new CreateQuickSelectRequest(
-            ShopId, _product.Id, null,
+            _product.Id, null,
             string.IsNullOrWhiteSpace(_label) ? null : _label.Trim(),
             string.IsNullOrWhiteSpace(_color) ? null : _color.Trim())));
     }

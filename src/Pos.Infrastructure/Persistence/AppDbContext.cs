@@ -57,9 +57,10 @@ public class AppDbContext : DbContext, IAppDbContext
             if (et.ClrType.GetProperty("Xmin") is not null)
                 mb.Entity(et.ClrType).Ignore("Xmin");
 
-            // Soft-delete + tenant filter
+            // Soft-delete + tenant + (optional) shop filter
             var clrType = et.ClrType;
             var isTenantOwned = typeof(ITenantEntity).IsAssignableFrom(clrType);
+            var isShopOwned = typeof(IShopEntity).IsAssignableFrom(clrType);
             var isStockBalance = clrType == typeof(StockBalance);
 
             if (isTenantOwned || isStockBalance)
@@ -82,6 +83,19 @@ public class AppDbContext : DbContext, IAppDbContext
                     body = Expression.AndAlso(body, notDeleted);
                 }
 
+                // Shop scope: only filter when the request carries a shop;
+                // management screens without a shop see all rows in the tenant.
+                if (isShopOwned)
+                {
+                    var ctxShopId = Expression.Property(
+                        Expression.Constant(_tenant), nameof(ITenantContext.ShopId));
+                    var hasShop = Expression.NotEqual(ctxShopId, Expression.Constant(null, typeof(Guid?)));
+                    var shopMatch = Expression.Equal(
+                        Expression.Property(p, "ShopId"),
+                        Expression.Property(ctxShopId, "Value"));
+                    body = Expression.AndAlso(body, Expression.OrElse(Expression.Not(hasShop), shopMatch));
+                }
+
                 mb.Entity(clrType).HasQueryFilter(Expression.Lambda(body, p));
             }
         }
@@ -98,6 +112,8 @@ public class AppDbContext : DbContext, IAppDbContext
                 if (entry.Entity.CreatedAt == default) entry.Entity.CreatedAt = now;
                 if (entry.Entity is ITenantEntity te && te.TenantId == Guid.Empty)
                     te.TenantId = _tenant.TenantId;
+                if (entry.Entity is IShopEntity se && se.ShopId == Guid.Empty && _tenant.ShopId is { } sid)
+                    se.ShopId = sid;
             }
             else if (entry.State == EntityState.Modified)
             {

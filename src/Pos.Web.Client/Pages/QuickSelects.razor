@@ -62,17 +62,13 @@
 @code {
     private List<QuickSelectDto> _items = new();
     private List<ProductDto> _products = new();
-    private Guid? _currentShopId;
     private bool _loading = true;
 
     protected override async Task OnInitializedAsync()
     {
         await Auth.LoadAsync();
         if (!Auth.IsAuthenticated) { Nav.NavigateTo("/login", true); return; }
-        // Pick the first shop in the user's tenant as their current shop.
-        // Multi-shop selection can come later via a shop picker in the AppBar.
-        var shops = await Api.ListShopsAsync();
-        _currentShopId = shops.FirstOrDefault()?.Id;
+        // Scope is automatic — AuthHeaderHandler sends X-Shop-Id on every request.
         var page = await Api.ListProductsAsync(pageSize: 500);
         _products = page?.Items.Where(p => p.IsActive).ToList() ?? new();
         await Reload();
@@ -81,7 +77,7 @@
     private async Task Reload()
     {
         _loading = true;
-        _items = (await Api.ListQuickSelectsAsync(_currentShopId)).OrderBy(x => x.Position).ToList();
+        _items = (await Api.ListQuickSelectsAsync()).OrderBy(x => x.Position).ToList();
         _loading = false;
     }
 
@@ -89,8 +85,7 @@
     {
         var parameters = new DialogParameters<QuickSelectDialog>
         {
-            { x => x.Products, _products },
-            { x => x.ShopId, _currentShopId }
+            { x => x.Products, _products }
         };
         var dialog = await Dialogs.ShowAsync<QuickSelectDialog>("Pin product", parameters,
             new DialogOptions { FullWidth = true, MaxWidth = MaxWidth.Small });

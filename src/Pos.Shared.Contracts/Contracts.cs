@@ -61,11 +61,11 @@ public sealed record UpdateProductRequest(
 
 // ---- Quick selects (POS shortcut tiles) ----
 public sealed record QuickSelectDto(
-    Guid Id, Guid? ShopId, Guid ProductId, int Position,
+    Guid Id, Guid ShopId, Guid ProductId, int Position,
     string? Label, string? Color,
     string ProductSku, string ProductName, decimal Price, string Currency, string? ImageUrl);
 
-public sealed record CreateQuickSelectRequest(Guid? ShopId, Guid ProductId, int? Position, string? Label, string? Color);
+public sealed record CreateQuickSelectRequest(Guid ProductId, int? Position, string? Label, string? Color);
 public sealed record UpdateQuickSelectRequest(int Position, string? Label, string? Color);
 
 public sealed record PageOf<T>(IReadOnlyList<T> Items, int Total, int PageNumber, int PageSize);

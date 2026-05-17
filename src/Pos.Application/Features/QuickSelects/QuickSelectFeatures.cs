@@ -8,14 +8,14 @@ using Pos.Domain.Catalog;
 namespace Pos.Application.Features.QuickSelects;
 
 public sealed record QuickSelectDto(
-    Guid Id, Guid? ShopId, Guid ProductId, int Position,
+    Guid Id, Guid ShopId, Guid ProductId, int Position,
     string? Label, string? Color,
     string ProductSku, string ProductName, decimal Price, string Currency, string? ImageUrl);
 
-public sealed record CreateQuickSelectRequest(Guid? ShopId, Guid ProductId, int? Position, string? Label, string? Color);
+public sealed record CreateQuickSelectRequest(Guid ProductId, int? Position, string? Label, string? Color);
 public sealed record UpdateQuickSelectRequest(int Position, string? Label, string? Color);
 
-public sealed record ListQuickSelectsQuery(Guid? ShopId) : IRequest<IReadOnlyList<QuickSelectDto>>;
+public sealed record ListQuickSelectsQuery : IRequest<IReadOnlyList<QuickSelectDto>>;
 public sealed record CreateQuickSelectCommand(CreateQuickSelectRequest Body) : IRequest<Result<QuickSelectDto>>;
 public sealed record UpdateQuickSelectCommand(Guid Id, UpdateQuickSelectRequest Body) : IRequest<Result<QuickSelectDto>>;
 public sealed record DeleteQuickSelectCommand(Guid Id) : IRequest<Result<bool>>;
@@ -37,10 +37,10 @@ public class ListQuickSelectsHandler : IRequestHandler<ListQuickSelectsQuery, IR
 
     public async Task<IReadOnlyList<QuickSelectDto>> Handle(ListQuickSelectsQuery req, CancellationToken ct)
     {
+        // Query filters in AppDbContext scope both sides to current tenant + shop.
         var q = from qs in _db.QuickSelects.AsNoTracking()
                 join p in _db.Products.AsNoTracking() on qs.ProductId equals p.Id
-                where qs.DeletedAt == null && p.DeletedAt == null && p.IsActive
-                      && (req.ShopId == null || qs.ShopId == null || qs.ShopId == req.ShopId)
+                where p.IsActive
                 orderby qs.Position, qs.Id
                 select new QuickSelectDto(
                     qs.Id, qs.ShopId, qs.ProductId, qs.Position,
@@ -61,21 +61,19 @@ public class CreateQuickSelectHandler : IRequestHandler<CreateQuickSelectCommand
         var p = await _db.Products.AsNoTracking().FirstOrDefaultAsync(x => x.Id == b.ProductId, ct);
         if (p is null) return Error.NotFound("product.not_found", "Product not found");
 
-        var dup = await _db.QuickSelects.AnyAsync(
-            x => x.ProductId == b.ProductId && x.ShopId == b.ShopId, ct);
-        if (dup) return Error.Conflict("quickselect.duplicate", "That product is already pinned for this shop");
+        var dup = await _db.QuickSelects.AnyAsync(x => x.ProductId == b.ProductId, ct);
+        if (dup) return Error.Conflict("quickselect.duplicate", "That product is already pinned");
 
         var pos = b.Position ?? (await _db.QuickSelects
-            .Where(x => x.ShopId == b.ShopId)
             .Select(x => (int?)x.Position).MaxAsync(ct) ?? -1) + 1;
 
         var qs = new QuickSelect
         {
-            ShopId = b.ShopId,
             ProductId = b.ProductId,
             Position = pos,
             Label = b.Label,
             Color = b.Color
+            // TenantId + ShopId populated by AppDbContext.SaveChangesAsync from the request context.
         };
         _db.QuickSelects.Add(qs);
         await _db.SaveChangesAsync(ct);

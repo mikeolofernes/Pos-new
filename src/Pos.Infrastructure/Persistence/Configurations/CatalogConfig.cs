@@ -10,7 +10,7 @@ public class CategoryConfig : IEntityTypeConfiguration<Category>
     {
         e.ToTable("categories");
         e.HasKey(x => x.Id);
-        e.HasIndex(x => new { x.TenantId, x.Slug }).IsUnique();
+        e.HasIndex(x => new { x.TenantId, x.ShopId, x.Slug }).IsUnique();
         e.Property(x => x.Name).HasMaxLength(128).IsRequired();
         e.Property(x => x.Slug).HasMaxLength(128).IsRequired();
     }
@@ -22,8 +22,8 @@ public class ProductConfig : IEntityTypeConfiguration<Product>
     {
         e.ToTable("products");
         e.HasKey(x => x.Id);
-        e.HasIndex(x => new { x.TenantId, x.Sku }).IsUnique();
-        e.HasIndex(x => new { x.TenantId, x.Name });
+        e.HasIndex(x => new { x.TenantId, x.ShopId, x.Sku }).IsUnique();
+        e.HasIndex(x => new { x.TenantId, x.ShopId, x.Name });
         e.Ignore(x => x.DefaultPrice);
         e.Property(x => x.Sku).HasMaxLength(64).IsRequired();
         e.Property(x => x.Name).HasMaxLength(256).IsRequired();

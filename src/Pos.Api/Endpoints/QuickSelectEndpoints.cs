@@ -11,8 +11,8 @@ public static class QuickSelectEndpoints
     {
         var g = app.MapGroup("/api/v1/quick-selects").WithTags("QuickSelects").RequireAuthorization();
 
-        g.MapGet("/", async (Guid? shopId, ISender sender, CancellationToken ct) =>
-                Results.Ok(await sender.Send(new ListQuickSelectsQuery(shopId), ct)))
+        g.MapGet("/", async (ISender sender, CancellationToken ct) =>
+                Results.Ok(await sender.Send(new ListQuickSelectsQuery(), ct)))
          .RequireAuthorization(Permissions.ProductsRead);
 
         g.MapPost("/", async (CreateQuickSelectRequest body, ISender sender, CancellationToken ct) =>

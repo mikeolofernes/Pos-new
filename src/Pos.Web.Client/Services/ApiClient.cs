@@ -99,11 +99,9 @@ public class ApiClient
         (await _http.DeleteAsync($"/api/v1/categories/{id}", ct)).IsSuccessStatusCode;
 
     // ---- Quick selects (POS tiles) ----
-    public async Task<IReadOnlyList<QuickSelectDto>> ListQuickSelectsAsync(Guid? shopId = null, CancellationToken ct = default)
-    {
-        var url = "/api/v1/quick-selects" + (shopId is null ? "" : $"?shopId={shopId}");
-        return await _http.GetFromJsonAsync<IReadOnlyList<QuickSelectDto>>(url, ct) ?? Array.Empty<QuickSelectDto>();
-    }
+    public async Task<IReadOnlyList<QuickSelectDto>> ListQuickSelectsAsync(CancellationToken ct = default) =>
+        await _http.GetFromJsonAsync<IReadOnlyList<QuickSelectDto>>("/api/v1/quick-selects", ct)
+            ?? Array.Empty<QuickSelectDto>();
 
     public async Task<QuickSelectDto?> CreateQuickSelectAsync(CreateQuickSelectRequest body, CancellationToken ct = default)
     {

@@ -18,6 +18,7 @@ builder.Services.AddMudServices(cfg =>
 });
 builder.Services.AddScoped<TokenStore>();
 builder.Services.AddScoped<AuthState>();
+builder.Services.AddScoped<CurrentShop>();
 builder.Services.AddScoped<AuthHeaderHandler>();
 builder.Services.AddScoped<OfflineOutbox>();
 builder.Services.AddScoped<IndexedDbInterop>();

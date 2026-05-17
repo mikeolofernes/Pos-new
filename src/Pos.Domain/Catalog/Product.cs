@@ -5,15 +5,17 @@ namespace Pos.Domain.Catalog;
 
 public enum ProductType : short { Standard = 1, Variant = 2, Bundle = 3, Service = 4 }
 
-public class Category : TenantEntity
+public class Category : TenantEntity, IShopEntity
 {
+    public Guid ShopId { get; set; }
     public Guid? ParentId { get; set; }
     public string Name { get; set; } = default!;
     public string Slug { get; set; } = default!;
 }
 
-public class Product : TenantEntity
+public class Product : TenantEntity, IShopEntity
 {
+    public Guid ShopId { get; set; }
     public string Sku { get; set; } = default!;
     public string Name { get; set; } = default!;
     public string? Description { get; set; }

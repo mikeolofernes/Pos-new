@@ -10,12 +10,14 @@ public class AuthHeaderHandler : DelegatingHandler
 {
     private readonly TokenStore _store;
     private readonly IHttpClientFactory _factory;
+    private readonly CurrentShop _shop;
     private static readonly SemaphoreSlim _refreshLock = new(1, 1);
 
-    public AuthHeaderHandler(TokenStore store, IHttpClientFactory factory)
+    public AuthHeaderHandler(TokenStore store, IHttpClientFactory factory, CurrentShop shop)
     {
         _store = store;
         _factory = factory;
+        _shop = shop;
     }
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
@@ -23,6 +25,9 @@ public class AuthHeaderHandler : DelegatingHandler
         var tokens = await _store.GetAsync();
         if (tokens is not null)
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokens.AccessToken);
+
+        if (_shop.ShopId is { } sid)
+            request.Headers.TryAddWithoutValidation("X-Shop-Id", sid.ToString());
 
         var response = await base.SendAsync(request, ct);
 

@@ -15,18 +15,25 @@ public class TenantResolutionMiddleware
         var subClaim = ctx.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
                       ?? ctx.User.FindFirst("sub")?.Value;
 
+        Guid? shopId = null;
+        if (ctx.Request.Headers.TryGetValue("X-Shop-Id", out var shopHdr) &&
+            Guid.TryParse(shopHdr.ToString(), out var sid))
+        {
+            shopId = sid;
+        }
+
         if (Guid.TryParse(tidClaim, out var tid))
         {
             Guid? uid = Guid.TryParse(subClaim, out var u) ? u : null;
-            tenantCtx.Set(tid, uid);
+            tenantCtx.Set(tid, uid, shopId);
         }
         else
         {
-            // 2) Header (for service-to-service or pre-auth endpoints)
+            // Header path (service-to-service or pre-auth endpoints)
             if (ctx.Request.Headers.TryGetValue("X-Tenant-Id", out var hdr) &&
                 Guid.TryParse(hdr.ToString(), out var hTid))
             {
-                tenantCtx.Set(hTid);
+                tenantCtx.Set(hTid, shopId: shopId);
             }
         }
 

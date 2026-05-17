@@ -1,6 +1,8 @@
 @inherits LayoutComponentBase
 @implements IDisposable
 @inject AuthState Auth
+@inject CurrentShop CurrentShop
+@inject ApiClient Api
 @inject NavigationManager Nav
 
 <MudThemeProvider Theme="_theme" IsDarkMode="false" />
@@ -65,6 +67,18 @@ else
     {
         Auth.Changed += StateHasChanged;
         await Auth.LoadAsync();
+        await CurrentShop.LoadAsync();
+        // If logged in but no shop chosen yet (e.g. first login on this device),
+        // default to the first shop returned by the API for this tenant.
+        if (Auth.IsAuthenticated && CurrentShop.ShopId is null)
+        {
+            try
+            {
+                var shops = await Api.ListShopsAsync();
+                if (shops.Count > 0) await CurrentShop.SetAsync(shops[0].Id);
+            }
+            catch { /* shop list failure is non-fatal here */ }
+        }
     }
 
     private async Task Logout()

@@ -13,6 +13,16 @@ public interface ITenantEntity : IEntity
     Guid TenantId { get; set; }
 }
 
+/// <summary>
+/// Marker for entities that belong to a single shop within a tenant.
+/// AppDbContext auto-populates ShopId from ITenantContext on insert and
+/// filters reads by the current shop.
+/// </summary>
+public interface IShopEntity : ITenantEntity
+{
+    Guid ShopId { get; set; }
+}
+
 public abstract class TenantEntity : ITenantEntity
 {
     public Guid Id { get; set; } = Pos.BuildingBlocks.UlidGuid.NewUlidGuid();
