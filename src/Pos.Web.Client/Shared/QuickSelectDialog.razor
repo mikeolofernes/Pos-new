@@ -8,14 +8,6 @@
                          ToStringFunc="@(p => p is null ? "" : $"{p.Sku} — {p.Name}")"
                          Required="true" Variant="Variant.Outlined"
                          Class="mb-3" />
-        <MudSelect T="Guid?" @bind-Value="_shopId" Label="Shop (blank = all shops)"
-                   Variant="Variant.Outlined" Clearable="true" Class="mb-3">
-            <MudSelectItem T="Guid?" Value="@((Guid?)null)">— All shops —</MudSelectItem>
-            @foreach (var s in Shops)
-            {
-                <MudSelectItem T="Guid?" Value="@((Guid?)s.Id)">@s.Name</MudSelectItem>
-            }
-        </MudSelect>
         <MudTextField @bind-Value="_label" Label="Label override (optional)"
                       Variant="Variant.Outlined" Class="mb-3" />
         <MudTextField @bind-Value="_color" Label="Tile colour (CSS, e.g. #2563EB)"
@@ -30,10 +22,12 @@
 @code {
     [CascadingParameter] private MudDialogInstance MudDialog { get; set; } = default!;
     [Parameter] public IReadOnlyList<ProductDto> Products { get; set; } = Array.Empty<ProductDto>();
-    [Parameter] public IReadOnlyList<ShopDto> Shops { get; set; } = Array.Empty<ShopDto>();
+
+    // The tile is always pinned to the cashier's current shop. The parent
+    // page passes that in; tenant is already implicit via the JWT.
+    [Parameter] public Guid? ShopId { get; set; }
 
     private ProductDto? _product;
-    private Guid? _shopId;
     private string? _label;
     private string? _color;
 
@@ -56,7 +50,7 @@
     {
         if (_product is null) return;
         MudDialog.Close(DialogResult.Ok(new CreateQuickSelectRequest(
-            _shopId, _product.Id, null,
+            ShopId, _product.Id, null,
             string.IsNullOrWhiteSpace(_label) ? null : _label.Trim(),
             string.IsNullOrWhiteSpace(_color) ? null : _color.Trim())));
     }
