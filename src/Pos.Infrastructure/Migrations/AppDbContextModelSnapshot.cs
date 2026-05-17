@@ -290,12 +290,6 @@ namespace Pos.Infrastructure.Migrations
                         .HasColumnType("numeric(19,4)")
                         .HasColumnName("default_price_amount");
 
-                    b.Property<string>("DefaultPriceCurrency")
-                        .IsRequired()
-                        .HasMaxLength(3)
-                        .HasColumnType("character varying(3)")
-                        .HasColumnName("default_price_currency");
-
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("deleted_at");
@@ -329,12 +323,6 @@ namespace Pos.Infrastructure.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)")
                         .HasColumnName("sku");
-
-                    b.Property<string>("TaxCode")
-                        .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)")
-                        .HasColumnName("tax_code");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid")
@@ -498,63 +486,6 @@ namespace Pos.Infrastructure.Migrations
                         .HasDatabaseName("ix_quick_selects_tenant_id_shop_id_product_id");
 
                     b.ToTable("quick_selects", (string)null);
-                });
-
-            modelBuilder.Entity("Pos.Domain.Catalog.Tax", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)")
-                        .HasColumnName("code");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_at");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_active");
-
-                    b.Property<bool>("IsInclusive")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_inclusive");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)")
-                        .HasColumnName("name");
-
-                    b.Property<decimal>("Rate")
-                        .HasColumnType("numeric(9,6)")
-                        .HasColumnName("rate");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("tenant_id");
-
-                    b.Property<DateTimeOffset?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
-
-                    b.HasKey("Id")
-                        .HasName("pk_taxes");
-
-                    b.HasIndex("TenantId", "Code")
-                        .IsUnique()
-                        .HasDatabaseName("ix_taxes_tenant_id_code");
-
-                    b.ToTable("taxes", (string)null);
                 });
 
             modelBuilder.Entity("Pos.Domain.Identity.Device", b =>
@@ -1023,12 +954,6 @@ namespace Pos.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasMaxLength(3)
-                        .HasColumnType("character varying(3)")
-                        .HasColumnName("currency");
-
                     b.Property<Guid?>("CustomerId")
                         .HasColumnType("uuid")
                         .HasColumnName("customer_id");
@@ -1076,10 +1001,6 @@ namespace Pos.Infrastructure.Migrations
                     b.Property<decimal>("Subtotal")
                         .HasColumnType("numeric(19,4)")
                         .HasColumnName("subtotal");
-
-                    b.Property<decimal>("TaxTotal")
-                        .HasColumnType("numeric(19,4)")
-                        .HasColumnName("tax_total");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid")
@@ -1143,10 +1064,6 @@ namespace Pos.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("line_number");
 
-                    b.Property<decimal>("LineTax")
-                        .HasColumnType("numeric(19,4)")
-                        .HasColumnName("line_tax");
-
                     b.Property<decimal>("LineTotal")
                         .HasColumnType("numeric(19,4)")
                         .HasColumnName("line_total");
@@ -1178,14 +1095,6 @@ namespace Pos.Infrastructure.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)")
                         .HasColumnName("sku_snapshot");
-
-                    b.Property<bool>("TaxInclusive")
-                        .HasColumnType("boolean")
-                        .HasColumnName("tax_inclusive");
-
-                    b.Property<decimal>("TaxRateSnapshot")
-                        .HasColumnType("numeric(9,6)")
-                        .HasColumnName("tax_rate_snapshot");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid")
@@ -1227,12 +1136,6 @@ namespace Pos.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasMaxLength(3)
-                        .HasColumnType("character varying(3)")
-                        .HasColumnName("currency");
-
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("deleted_at");
@@ -1241,10 +1144,6 @@ namespace Pos.Infrastructure.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)")
                         .HasColumnName("external_reference");
-
-                    b.Property<decimal>("FxRate")
-                        .HasColumnType("numeric(19,8)")
-                        .HasColumnName("fx_rate");
 
                     b.Property<string>("Method")
                         .IsRequired()
@@ -1445,12 +1344,6 @@ namespace Pos.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasMaxLength(3)
-                        .HasColumnType("character varying(3)")
-                        .HasColumnName("currency");
-
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("deleted_at");
@@ -1476,12 +1369,6 @@ namespace Pos.Infrastructure.Migrations
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid")
                         .HasColumnName("tenant_id");
-
-                    b.Property<string>("TimeZoneId")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
-                        .HasColumnName("time_zone_id");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -1685,12 +1572,6 @@ namespace Pos.Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("dedicated_connection_string");
 
-                    b.Property<string>("DefaultCurrency")
-                        .IsRequired()
-                        .HasMaxLength(3)
-                        .HasColumnType("character varying(3)")
-                        .HasColumnName("default_currency");
-
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("deleted_at");
@@ -1714,12 +1595,6 @@ namespace Pos.Infrastructure.Migrations
                     b.Property<short>("Status")
                         .HasColumnType("smallint")
                         .HasColumnName("status");
-
-                    b.Property<string>("TimeZoneId")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
-                        .HasColumnName("time_zone_id");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
