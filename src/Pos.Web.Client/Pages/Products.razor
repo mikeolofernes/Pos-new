@@ -28,6 +28,7 @@
     <HeaderContent>
         <MudTh>SKU</MudTh>
         <MudTh>Name</MudTh>
+        <MudTh>Category</MudTh>
         <MudTh Style="text-align:right">Price</MudTh>
         <MudTh>Tax</MudTh>
         <MudTh>Active</MudTh>
@@ -36,6 +37,7 @@
     <RowTemplate>
         <MudTd DataLabel="SKU"><code>@context.Sku</code></MudTd>
         <MudTd DataLabel="Name">@context.Name</MudTd>
+        <MudTd DataLabel="Category">@CategoryName(context.CategoryId)</MudTd>
         <MudTd DataLabel="Price" Style="text-align:right">@context.Currency @context.Price.ToString("0.00")</MudTd>
         <MudTd DataLabel="Tax">@context.TaxCode</MudTd>
         <MudTd DataLabel="Active">
@@ -58,6 +60,7 @@
 
 @code {
     private List<ProductDto> _items = new();
+    private List<CategoryDto> _categories = new();
     private bool _loading = true;
     private string _search = "";
 
@@ -65,6 +68,7 @@
     {
         await Auth.LoadAsync();
         if (!Auth.IsAuthenticated) { Nav.NavigateTo("/login", true); return; }
+        _categories = (await Api.ListCategoriesAsync()).ToList();
         await Reload();
     }
 
@@ -76,9 +80,14 @@
         _loading = false;
     }
 
+    private string CategoryName(Guid? id) => id is null
+        ? "—"
+        : (_categories.FirstOrDefault(c => c.Id == id)?.Name ?? "—");
+
     private async Task OpenCreate()
     {
-        var dialog = await Dialogs.ShowAsync<ProductDialog>("New product",
+        var parameters = new DialogParameters<ProductDialog> { { x => x.Categories, _categories } };
+        var dialog = await Dialogs.ShowAsync<ProductDialog>("New product", parameters,
             new DialogOptions { FullWidth = true, MaxWidth = MaxWidth.Small });
         var result = await dialog.Result;
         if (result?.Canceled is false && result.Data is CreateProductRequest body)
@@ -92,7 +101,11 @@
 
     private async Task OpenEdit(ProductDto p)
     {
-        var parameters = new DialogParameters<ProductDialog> { { x => x.Existing, p } };
+        var parameters = new DialogParameters<ProductDialog>
+        {
+            { x => x.Existing, p },
+            { x => x.Categories, _categories }
+        };
         var dialog = await Dialogs.ShowAsync<ProductDialog>("Edit product", parameters,
             new DialogOptions { FullWidth = true, MaxWidth = MaxWidth.Small });
         var result = await dialog.Result;

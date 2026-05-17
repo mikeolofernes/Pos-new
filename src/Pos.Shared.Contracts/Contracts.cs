@@ -39,6 +39,11 @@ public sealed record CreateUserRequest(
 public sealed record UpdateUserRequest(
     string DisplayName, string? Phone, bool IsActive, string? NewPassword);
 
+// ---- Categories ----
+public sealed record CategoryDto(Guid Id, Guid? ParentId, string Name, string Slug);
+public sealed record CreateCategoryRequest(Guid? ParentId, string Name, string Slug);
+public sealed record UpdateCategoryRequest(Guid? ParentId, string Name, string Slug);
+
 // ---- Products ----
 public sealed record ProductDto(
     Guid Id, string Sku, string Name, string? Description, Guid? CategoryId,

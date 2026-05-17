@@ -76,6 +76,28 @@ public class ApiClient
     public async Task<bool> DeleteUserAsync(Guid id, CancellationToken ct = default) =>
         (await _http.DeleteAsync($"/api/v1/users/{id}", ct)).IsSuccessStatusCode;
 
+    // ---- Categories ----
+    public async Task<IReadOnlyList<CategoryDto>> ListCategoriesAsync(CancellationToken ct = default) =>
+        await _http.GetFromJsonAsync<IReadOnlyList<CategoryDto>>("/api/v1/categories", ct)
+            ?? Array.Empty<CategoryDto>();
+
+    public async Task<CategoryDto?> CreateCategoryAsync(CreateCategoryRequest body, CancellationToken ct = default)
+    {
+        var r = await _http.PostAsJsonAsync("/api/v1/categories", body, ct);
+        if (!r.IsSuccessStatusCode) return null;
+        return await r.Content.ReadFromJsonAsync<CategoryDto>(cancellationToken: ct);
+    }
+
+    public async Task<CategoryDto?> UpdateCategoryAsync(Guid id, UpdateCategoryRequest body, CancellationToken ct = default)
+    {
+        var r = await _http.PutAsJsonAsync($"/api/v1/categories/{id}", body, ct);
+        if (!r.IsSuccessStatusCode) return null;
+        return await r.Content.ReadFromJsonAsync<CategoryDto>(cancellationToken: ct);
+    }
+
+    public async Task<bool> DeleteCategoryAsync(Guid id, CancellationToken ct = default) =>
+        (await _http.DeleteAsync($"/api/v1/categories/{id}", ct)).IsSuccessStatusCode;
+
     // ---- Products ----
     public async Task<PageOf<ProductDto>?> ListProductsAsync(string? q = null, int page = 1, int pageSize = 100, CancellationToken ct = default)
     {

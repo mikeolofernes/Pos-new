@@ -1,0 +1,111 @@
+@page "/categories"
+@inject ApiClient Api
+@inject AuthState Auth
+@inject NavigationManager Nav
+@inject IDialogService Dialogs
+@inject ISnackbar Snackbar
+
+<PageTitle>Categories</PageTitle>
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3">
+    <MudText Typo="Typo.h5">Categories</MudText>
+    <MudSpacer />
+    <MudButton StartIcon="@Icons.Material.Filled.Add"
+               Variant="Variant.Filled" Color="Color.Primary"
+               Disabled="@(!Auth.Has("products.write"))"
+               OnClick="OpenCreate">New category</MudButton>
+</MudStack>
+
+<MudTable Items="_items" Loading="_loading" Hover="true" Dense="true"
+          Breakpoint="Breakpoint.Sm" Class="mud-elevation-1">
+    <HeaderContent>
+        <MudTh>Name</MudTh>
+        <MudTh>Slug</MudTh>
+        <MudTh>Parent</MudTh>
+        <MudTh Style="text-align:right">Actions</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Name">@context.Name</MudTd>
+        <MudTd DataLabel="Slug"><code>@context.Slug</code></MudTd>
+        <MudTd DataLabel="Parent">@ParentName(context.ParentId)</MudTd>
+        <MudTd Style="text-align:right">
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                           Disabled="@(!Auth.Has("products.write"))"
+                           OnClick="@(() => OpenEdit(context))" />
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                           Disabled="@(!Auth.Has("products.write"))"
+                           OnClick="@(() => Delete(context))" />
+        </MudTd>
+    </RowTemplate>
+    <NoRecordsContent><MudText>No categories yet.</MudText></NoRecordsContent>
+</MudTable>
+
+@code {
+    private List<CategoryDto> _items = new();
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Auth.LoadAsync();
+        if (!Auth.IsAuthenticated) { Nav.NavigateTo("/login", true); return; }
+        await Reload();
+    }
+
+    private async Task Reload()
+    {
+        _loading = true;
+        _items = (await Api.ListCategoriesAsync()).ToList();
+        _loading = false;
+    }
+
+    private string ParentName(Guid? id) => id is null
+        ? "—"
+        : (_items.FirstOrDefault(c => c.Id == id)?.Name ?? "—");
+
+    private async Task OpenCreate()
+    {
+        var parameters = new DialogParameters<CategoryDialog> { { x => x.Parents, _items } };
+        var dialog = await Dialogs.ShowAsync<CategoryDialog>("New category", parameters,
+            new DialogOptions { FullWidth = true, MaxWidth = MaxWidth.Small });
+        var result = await dialog.Result;
+        if (result?.Canceled is false && result.Data is CreateCategoryRequest body)
+        {
+            var c = await Api.CreateCategoryAsync(body);
+            if (c is null) { Snackbar.Add("Could not create (duplicate slug?)", Severity.Error); return; }
+            Snackbar.Add($"Created {c.Name}", Severity.Success);
+            await Reload();
+        }
+    }
+
+    private async Task OpenEdit(CategoryDto c)
+    {
+        var parameters = new DialogParameters<CategoryDialog>
+        {
+            { x => x.Existing, c },
+            { x => x.Parents, _items }
+        };
+        var dialog = await Dialogs.ShowAsync<CategoryDialog>("Edit category", parameters,
+            new DialogOptions { FullWidth = true, MaxWidth = MaxWidth.Small });
+        var result = await dialog.Result;
+        if (result?.Canceled is false && result.Data is UpdateCategoryRequest body)
+        {
+            var u = await Api.UpdateCategoryAsync(c.Id, body);
+            if (u is null) { Snackbar.Add("Update failed", Severity.Error); return; }
+            Snackbar.Add("Saved", Severity.Success);
+            await Reload();
+        }
+    }
+
+    private async Task Delete(CategoryDto c)
+    {
+        var ok = await Dialogs.ShowMessageBox("Delete category",
+            $"Delete '{c.Name}'?", yesText: "Delete", cancelText: "Cancel");
+        if (ok is not true) return;
+        if (await Api.DeleteCategoryAsync(c.Id))
+        {
+            Snackbar.Add("Deleted", Severity.Info);
+            await Reload();
+        }
+        else Snackbar.Add("Delete failed (in use or has children?)", Severity.Error);
+    }
+}

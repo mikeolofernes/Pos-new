@@ -1,0 +1,69 @@
+@using Pos.Shared.Contracts
+
+<MudDialog>
+    <DialogContent>
+        <MudTextField @bind-Value="_name" @bind-Value:after="AutoSlug"
+                      Label="Name" Variant="Variant.Outlined" Required="true" Class="mb-3" />
+        <MudTextField @bind-Value="_slug" Label="Slug (lowercase, no spaces)"
+                      Variant="Variant.Outlined" Required="true" Class="mb-3" />
+        <MudSelect T="Guid?" @bind-Value="_parentId" Label="Parent (optional)"
+                   Variant="Variant.Outlined" Clearable="true">
+            <MudSelectItem T="Guid?" Value="@((Guid?)null)">— None —</MudSelectItem>
+            @foreach (var c in Parents)
+            {
+                <MudSelectItem T="Guid?" Value="@((Guid?)c.Id)">@c.Name</MudSelectItem>
+            }
+        </MudSelect>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private MudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public CategoryDto? Existing { get; set; }
+    [Parameter] public IReadOnlyList<CategoryDto> Parents { get; set; } = Array.Empty<CategoryDto>();
+
+    private bool _isEdit;
+    private string _name = "";
+    private string _slug = "";
+    private Guid? _parentId;
+    private bool _slugTouched;
+
+    protected override void OnInitialized()
+    {
+        if (Existing is not null)
+        {
+            _isEdit = true;
+            _name = Existing.Name;
+            _slug = Existing.Slug;
+            _parentId = Existing.ParentId;
+            _slugTouched = true;
+            // Exclude self from parent options
+            Parents = Parents.Where(c => c.Id != Existing.Id).ToList();
+        }
+    }
+
+    private void AutoSlug()
+    {
+        if (_slugTouched || string.IsNullOrEmpty(_name)) return;
+        _slug = new string(_name.ToLowerInvariant()
+            .Select(ch => char.IsLetterOrDigit(ch) ? ch : '-').ToArray())
+            .Trim('-');
+        while (_slug.Contains("--")) _slug = _slug.Replace("--", "-");
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private void Submit()
+    {
+        if (string.IsNullOrWhiteSpace(_name) || string.IsNullOrWhiteSpace(_slug)) return;
+        _slugTouched = true;
+        if (_isEdit)
+            MudDialog.Close(DialogResult.Ok(new UpdateCategoryRequest(_parentId, _name.Trim(), _slug.Trim())));
+        else
+            MudDialog.Close(DialogResult.Ok(new CreateCategoryRequest(_parentId, _name.Trim(), _slug.Trim())));
+    }
+}

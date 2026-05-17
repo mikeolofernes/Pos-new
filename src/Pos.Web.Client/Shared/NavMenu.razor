@@ -2,8 +2,9 @@
 
 <MudNavMenu Class="pt-2">
     <MudNavLink Href="/pos"       Icon="@Icons.Material.Filled.PointOfSale"   Match="NavLinkMatch.Prefix">POS</MudNavLink>
-    <MudNavLink Href="/products"  Icon="@Icons.Material.Filled.Inventory2"    Match="NavLinkMatch.Prefix">Products</MudNavLink>
-    <MudNavLink Href="/inventory" Icon="@Icons.Material.Filled.Warehouse"     Match="NavLinkMatch.Prefix">Inventory</MudNavLink>
+    <MudNavLink Href="/products"   Icon="@Icons.Material.Filled.Inventory2"   Match="NavLinkMatch.Prefix">Products</MudNavLink>
+    <MudNavLink Href="/categories" Icon="@Icons.Material.Filled.Category"     Match="NavLinkMatch.Prefix">Categories</MudNavLink>
+    <MudNavLink Href="/inventory"  Icon="@Icons.Material.Filled.Warehouse"    Match="NavLinkMatch.Prefix">Inventory</MudNavLink>
     <MudNavLink Href="/shifts"    Icon="@Icons.Material.Filled.AccessTime"    Match="NavLinkMatch.Prefix">Shifts</MudNavLink>
     @if (Auth.Has("shops.read"))
     {

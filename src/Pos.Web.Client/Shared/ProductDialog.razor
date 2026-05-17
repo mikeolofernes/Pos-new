@@ -16,6 +16,14 @@
             </MudItem>
         </MudGrid>
         <MudTextField @bind-Value="_taxCode" Label="Tax code" Variant="Variant.Outlined" Class="mb-3" />
+        <MudSelect T="Guid?" @bind-Value="_categoryId" Label="Category"
+                   Variant="Variant.Outlined" Clearable="true" Class="mb-3">
+            <MudSelectItem T="Guid?" Value="@((Guid?)null)">— None —</MudSelectItem>
+            @foreach (var c in Categories)
+            {
+                <MudSelectItem T="Guid?" Value="@((Guid?)c.Id)">@c.Name</MudSelectItem>
+            }
+        </MudSelect>
         <MudStack Row="true" Spacing="3">
             <MudSwitch @bind-Value="_trackInventory" Color="Color.Primary">Track inventory</MudSwitch>
             @if (_isEdit)
@@ -33,11 +41,13 @@
 @code {
     [CascadingParameter] private MudDialogInstance MudDialog { get; set; } = default!;
     [Parameter] public ProductDto? Existing { get; set; }
+    [Parameter] public IReadOnlyList<CategoryDto> Categories { get; set; } = Array.Empty<CategoryDto>();
 
     private bool _isEdit;
     private string _sku = "";
     private string _name = "";
     private string? _description;
+    private Guid? _categoryId;
     private decimal _price;
     private string _currency = "USD";
     private string _taxCode = "standard";
@@ -52,6 +62,7 @@
             _sku = Existing.Sku;
             _name = Existing.Name;
             _description = Existing.Description;
+            _categoryId = Existing.CategoryId;
             _price = Existing.Price;
             _currency = Existing.Currency;
             _taxCode = Existing.TaxCode;
@@ -68,14 +79,14 @@
         if (_isEdit)
         {
             MudDialog.Close(DialogResult.Ok(new UpdateProductRequest(
-                _name.Trim(), _description, null, _price, _currency.Trim(),
+                _name.Trim(), _description, _categoryId, _price, _currency.Trim(),
                 _taxCode.Trim(), _trackInventory, _isActive)));
         }
         else
         {
             if (string.IsNullOrWhiteSpace(_sku)) return;
             MudDialog.Close(DialogResult.Ok(new CreateProductRequest(
-                _sku.Trim(), _name.Trim(), _description, null,
+                _sku.Trim(), _name.Trim(), _description, _categoryId,
                 _price, _currency.Trim(), _taxCode.Trim(), _trackInventory)));
         }
     }
