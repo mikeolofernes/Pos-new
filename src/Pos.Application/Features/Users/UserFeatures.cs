@@ -141,7 +141,7 @@ public class CreateUserHandler : IRequestHandler<CreateUserCommand, Result<UserD
         var b = req.Body;
         var tenantId = _tenant.TenantId;
         var email = (b.Email ?? "").Trim().ToLowerInvariant();
-        var dup = await _db.Users.AnyAsync(u => u.Email.ToLower() == email, ct);
+        var dup = await _db.Users.IgnoreQueryFilters().AnyAsync(u => u.Email == email && u.DeletedAt == null, ct);
         if (dup) return Error.Conflict("user.email.duplicate", $"Email '{email}' already exists");
 
         Guid? roleId = b.RoleId;

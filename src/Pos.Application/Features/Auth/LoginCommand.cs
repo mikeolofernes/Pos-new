@@ -8,7 +8,7 @@ using Pos.Domain.Tenancy;
 
 namespace Pos.Application.Features.Auth;
 
-public sealed record LoginCommand(string TenantSlug, string Email, string Password, string? DeviceName)
+public sealed record LoginCommand(string Email, string Password, string? DeviceName)
     : IRequest<Result<LoginResult>>;
 
 public sealed record LoginResult(
@@ -20,7 +20,6 @@ public class LoginValidator : AbstractValidator<LoginCommand>
 {
     public LoginValidator()
     {
-        RuleFor(x => x.TenantSlug).NotEmpty();
         RuleFor(x => x.Email).NotEmpty().EmailAddress();
         RuleFor(x => x.Password).NotEmpty().MinimumLength(6);
     }
@@ -37,19 +36,20 @@ public class LoginHandler : IRequestHandler<LoginCommand, Result<LoginResult>>
 
     public async Task<Result<LoginResult>> Handle(LoginCommand req, CancellationToken ct)
     {
-        var tenant = await _db.Tenants.AsNoTracking()
-            .FirstOrDefaultAsync(t => t.Slug == req.TenantSlug && t.DeletedAt == null, ct);
-        if (tenant is null) return Error.Unauthorized("auth.invalid", "Invalid credentials");
-        if (tenant.Status == TenantStatus.Suspended || tenant.Status == TenantStatus.Cancelled)
-            return Error.Forbidden("tenant.disabled", "Tenant is not active");
-
         var email = req.Email.Trim().ToLowerInvariant();
-        // Bypass query filter: we don't have a tenant context yet at login time.
+
+        // Email is globally unique — look up user across all tenants.
         var user = await _db.Users.IgnoreQueryFilters().AsNoTracking()
-            .FirstOrDefaultAsync(u => u.TenantId == tenant.Id && u.Email.ToLower() == email && u.DeletedAt == null, ct);
+            .FirstOrDefaultAsync(u => u.Email == email && u.DeletedAt == null, ct);
         if (user is null || !user.IsActive) return Error.Unauthorized("auth.invalid", "Invalid credentials");
         if (!_hasher.Verify(req.Password, user.PasswordHash))
             return Error.Unauthorized("auth.invalid", "Invalid credentials");
+
+        var tenant = await _db.Tenants.IgnoreQueryFilters().AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == user.TenantId && t.DeletedAt == null, ct);
+        if (tenant is null) return Error.Unauthorized("auth.invalid", "Invalid credentials");
+        if (tenant.Status == TenantStatus.Suspended || tenant.Status == TenantStatus.Cancelled)
+            return Error.Forbidden("tenant.disabled", "Tenant is not active");
 
         // Permissions come from the user's directly-assigned role.
         var role = user.RoleId is { } rid
@@ -66,8 +66,6 @@ public class LoginHandler : IRequestHandler<LoginCommand, Result<LoginResult>>
             LastSeenAt = DateTimeOffset.UtcNow
         };
         _db.Devices.Add(device);
-        // Bypass tenant filter during login by detaching change-tracker reliance on _tenant
-        // (TenantId is set explicitly above).
 
         var tokens = _jwt.Issue(tenant.Id, user.Id, user.Email, perms, device.Id);
 

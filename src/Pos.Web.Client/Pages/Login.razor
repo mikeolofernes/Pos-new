@@ -9,13 +9,9 @@
     <MudText Typo="Typo.h5" GutterBottom="true">Sign in</MudText>
 
     <MudForm @ref="_form" Model="_model">
-        <MudTextField @bind-Value="_model.TenantSlug" Label="Tenant" Variant="Variant.Outlined"
-                      Required="true" RequiredError="Tenant is required"
-                      AutoFocus="true" Class="mb-3" />
-
         <MudTextField @bind-Value="_model.Email" Label="Email" Variant="Variant.Outlined"
                       InputType="InputType.Email" Required="true" RequiredError="Email is required"
-                      Class="mb-3" />
+                      AutoFocus="true" Class="mb-3" />
 
         <MudTextField @bind-Value="_model.Password" Label="Password" Variant="Variant.Outlined"
                       InputType="InputType.Password" Required="true" RequiredError="Password is required"
@@ -30,14 +26,13 @@
     </MudForm>
 
     <MudText Typo="Typo.caption" Class="mt-4 d-block">
-        Dev seed: <code>demo</code> / <code>admin@@demo.local</code> / <code>Passw0rd!</code>
+        Dev seed: <code>admin@@demo.local</code> / <code>Passw0rd!</code>
     </MudText>
 </MudPaper>
 
 @code {
     private sealed class Model
     {
-        public string TenantSlug { get; set; } = "demo";
         public string Email { get; set; } = "";
         public string Password { get; set; } = "";
     }
@@ -53,7 +48,6 @@
         try
         {
             var resp = await Api.LoginAsync(new LoginRequest(
-                _model.TenantSlug.Trim().ToLowerInvariant(),
                 _model.Email.Trim().ToLowerInvariant(),
                 _model.Password, "browser"));
             if (resp is null) { Snackbar.Add(Api.LastError ?? "Invalid credentials", Severity.Error); return; }

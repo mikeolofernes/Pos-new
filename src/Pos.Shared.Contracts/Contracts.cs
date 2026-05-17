@@ -1,7 +1,7 @@
 namespace Pos.Shared.Contracts;
 
 // ---- Auth ----
-public sealed record LoginRequest(string TenantSlug, string Email, string Password, string? DeviceName);
+public sealed record LoginRequest(string Email, string Password, string? DeviceName);
 
 public sealed record LoginResponse(
     string AccessToken, DateTimeOffset AccessExpiresAt,
