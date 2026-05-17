@@ -100,8 +100,8 @@ public class AppDbContext : DbContext, IAppDbContext
                     var ctxShopId = Expression.Property(self, nameof(CurrentShopId));
                     var hasShop = Expression.NotEqual(ctxShopId, Expression.Constant(null, typeof(Guid?)));
                     var shopMatch = Expression.Equal(
-                        Expression.Property(p, "ShopId"),
-                        Expression.Property(ctxShopId, "Value"));
+                        Expression.Convert(Expression.Property(p, "ShopId"), typeof(Guid?)),
+                        ctxShopId);
                     body = Expression.AndAlso(body, Expression.OrElse(Expression.Not(hasShop), shopMatch));
                 }
 
