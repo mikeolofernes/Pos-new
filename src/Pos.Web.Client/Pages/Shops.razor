@@ -53,10 +53,17 @@
     private List<ShopDto> _items = new();
     private bool _loading = true;
 
+    private List<TenantDto> _tenants = new();
+
     protected override async Task OnInitializedAsync()
     {
         await Auth.LoadAsync();
         if (!Auth.IsAuthenticated) { Nav.NavigateTo("/login", true); return; }
+        if (!Auth.Has("shops.write")) { Nav.NavigateTo("/", true); return; }
+        if (Auth.Has("settings.manage"))
+        {
+            try { _tenants = (await Api.ListTenantsAsync()).ToList(); } catch { /* ignore */ }
+        }
         await Reload();
     }
 
@@ -69,7 +76,8 @@
 
     private async Task OpenCreate()
     {
-        var dialog = await Dialogs.ShowAsync<ShopDialog>("New shop",
+        var parameters = new DialogParameters<ShopDialog> { { x => x.Tenants, _tenants } };
+        var dialog = await Dialogs.ShowAsync<ShopDialog>("New shop", parameters,
             new DialogOptions { FullWidth = true, MaxWidth = MaxWidth.Small });
         var result = await dialog.Result;
         if (result?.Canceled is false && result.Data is CreateShopRequest body)
@@ -83,7 +91,11 @@
 
     private async Task OpenEdit(ShopDto s)
     {
-        var parameters = new DialogParameters<ShopDialog> { { x => x.Existing, s } };
+        var parameters = new DialogParameters<ShopDialog>
+        {
+            { x => x.Existing, s },
+            { x => x.Tenants, _tenants }
+        };
         var dialog = await Dialogs.ShowAsync<ShopDialog>("Edit shop", parameters,
             new DialogOptions { FullWidth = true, MaxWidth = MaxWidth.Small });
         var result = await dialog.Result;

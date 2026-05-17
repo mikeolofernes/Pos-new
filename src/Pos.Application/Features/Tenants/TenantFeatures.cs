@@ -78,7 +78,19 @@ public class CreateTenantHandler : IRequestHandler<CreateTenantCommand, Result<T
             Permissions = Permissions.All,
             IsSystem = true
         };
-        _db.Roles.Add(adminRole);
+        var cashierRole = new Role
+        {
+            TenantId = t.Id,
+            Name = "Cashier",
+            Permissions = new[]
+            {
+                Permissions.SalesCreate, Permissions.ProductsRead,
+                Permissions.InventoryRead, Permissions.ShopsRead,
+                Permissions.ShiftsManage
+            },
+            IsSystem = true
+        };
+        _db.Roles.AddRange(adminRole, cashierRole);
 
         var admin = new User
         {

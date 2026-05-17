@@ -23,7 +23,7 @@ public sealed record CreateTenantRequest(
 public sealed record ShopDto(Guid Id, string Code, string Name, string Currency, string TimeZoneId, bool IsActive);
 
 public sealed record CreateShopRequest(
-    string Code, string Name, string Currency, string TimeZoneId, string CountryCode);
+    string Code, string Name, string Currency, string TimeZoneId, string CountryCode, Guid? TenantId = null);
 
 public sealed record UpdateShopRequest(
     string Code, string Name, string Currency, string TimeZoneId, string CountryCode, bool IsActive);
@@ -31,13 +31,15 @@ public sealed record UpdateShopRequest(
 // ---- Users ----
 public sealed record UserDto(
     Guid Id, string Email, string DisplayName, string? Phone, bool IsActive,
-    DateTimeOffset? LastLoginAt, DateTimeOffset CreatedAt);
+    DateTimeOffset? LastLoginAt, DateTimeOffset CreatedAt, IReadOnlyList<Guid> ShopIds);
 
 public sealed record CreateUserRequest(
-    string Email, string DisplayName, string? Phone, string Password, bool IsActive);
+    string Email, string DisplayName, string? Phone, string Password, bool IsActive,
+    IReadOnlyList<Guid>? ShopIds = null);
 
 public sealed record UpdateUserRequest(
-    string DisplayName, string? Phone, bool IsActive, string? NewPassword);
+    string DisplayName, string? Phone, bool IsActive, string? NewPassword,
+    IReadOnlyList<Guid>? ShopIds = null);
 
 // ---- Categories ----
 public sealed record CategoryDto(Guid Id, Guid? ParentId, string Name, string Slug);

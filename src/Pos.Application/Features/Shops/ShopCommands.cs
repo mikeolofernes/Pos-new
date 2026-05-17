@@ -7,7 +7,7 @@ using Pos.Domain.Shops;
 
 namespace Pos.Application.Features.Shops;
 
-public sealed record CreateShopRequest(string Code, string Name, string Currency, string TimeZoneId, string CountryCode);
+public sealed record CreateShopRequest(string Code, string Name, string Currency, string TimeZoneId, string CountryCode, Guid? TenantId = null);
 public sealed record UpdateShopRequest(string Code, string Name, string Currency, string TimeZoneId, string CountryCode, bool IsActive);
 
 public sealed record CreateShopCommand(CreateShopRequest Body) : IRequest<Result<ShopDto>>;
@@ -44,7 +44,11 @@ public class CreateShopHandler : IRequestHandler<CreateShopCommand, Result<ShopD
     public async Task<Result<ShopDto>> Handle(CreateShopCommand req, CancellationToken ct)
     {
         var b = req.Body;
-        var dup = await _db.Shops.AnyAsync(s => s.Code == b.Code, ct);
+        // When the caller specifies a tenant (super-admin path), check duplicates
+        // across that tenant; otherwise the query filter scopes to current tenant.
+        var dup = b.TenantId is { } overrideTid
+            ? await _db.Shops.IgnoreQueryFilters().AnyAsync(s => s.Code == b.Code && s.TenantId == overrideTid && s.DeletedAt == null, ct)
+            : await _db.Shops.AnyAsync(s => s.Code == b.Code, ct);
         if (dup) return Error.Conflict("shop.code.duplicate", $"Shop code '{b.Code}' already exists");
 
         var s = new Shop
@@ -55,7 +59,10 @@ public class CreateShopHandler : IRequestHandler<CreateShopCommand, Result<ShopD
             TimeZoneId = b.TimeZoneId,
             CountryCode = b.CountryCode,
             IsActive = true
+            // TenantId is auto-populated from request context by SaveChangesAsync
+            // unless the caller passed an explicit one (super-admin path).
         };
+        if (b.TenantId is { } tid) s.TenantId = tid;
         _db.Shops.Add(s);
         await _db.SaveChangesAsync(ct);
         return new ShopDto(s.Id, s.Code, s.Name, s.Currency, s.TimeZoneId, s.IsActive);

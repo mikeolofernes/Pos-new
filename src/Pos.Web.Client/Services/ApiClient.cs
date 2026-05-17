@@ -35,6 +35,10 @@ public class ApiClient
         await _http.GetFromJsonAsync<IReadOnlyList<ShopDto>>("/api/v1/shops", ct)
             ?? Array.Empty<ShopDto>();
 
+    public async Task<IReadOnlyList<ShopDto>> ListMyShopsAsync(CancellationToken ct = default) =>
+        await _http.GetFromJsonAsync<IReadOnlyList<ShopDto>>("/api/v1/shops/mine", ct)
+            ?? Array.Empty<ShopDto>();
+
     public async Task<ShopDto?> CreateShopAsync(CreateShopRequest body, CancellationToken ct = default)
     {
         var r = await _http.PostAsJsonAsync("/api/v1/shops", body, ct);

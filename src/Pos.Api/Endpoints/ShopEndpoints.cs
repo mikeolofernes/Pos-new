@@ -15,6 +15,10 @@ public static class ShopEndpoints
                 Results.Ok(await sender.Send(new ListShopsQuery(), ct)))
          .RequireAuthorization(Permissions.ShopsRead);
 
+        // Shops the current user is bound to via UserShopRole.
+        g.MapGet("/mine", async (ISender sender, CancellationToken ct) =>
+                Results.Ok(await sender.Send(new ListMyShopsQuery(), ct)));
+
         g.MapPost("/", async (CreateShopRequest body, ISender sender, CancellationToken ct) =>
                 (await sender.Send(new CreateShopCommand(body), ct))
                     .ToHttp(s => Results.Created($"/api/v1/shops/{s.Id}", s)))

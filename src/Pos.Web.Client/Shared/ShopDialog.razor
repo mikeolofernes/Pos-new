@@ -2,6 +2,17 @@
 
 <MudDialog>
     <DialogContent>
+        @if (!_isEdit && Tenants.Count > 0)
+        {
+            <MudSelect T="Guid?" @bind-Value="_tenantId" Label="Tenant"
+                       Variant="Variant.Outlined" Clearable="true" Class="mb-3">
+                <MudSelectItem T="Guid?" Value="@((Guid?)null)">— Current tenant —</MudSelectItem>
+                @foreach (var t in Tenants)
+                {
+                    <MudSelectItem T="Guid?" Value="@((Guid?)t.Id)">@t.Name (@t.Slug)</MudSelectItem>
+                }
+            </MudSelect>
+        }
         <MudTextField @bind-Value="_code" Label="Code" Variant="Variant.Outlined"
                       Required="true" Disabled="@(_isEdit)" Class="mb-3" />
         <MudTextField @bind-Value="_name" Label="Name" Variant="Variant.Outlined" Required="true" Class="mb-3" />
@@ -30,8 +41,10 @@
 @code {
     [CascadingParameter] private MudDialogInstance MudDialog { get; set; } = default!;
     [Parameter] public ShopDto? Existing { get; set; }
+    [Parameter] public IReadOnlyList<TenantDto> Tenants { get; set; } = Array.Empty<TenantDto>();
 
     private bool _isEdit;
+    private Guid? _tenantId;
     private string _code = "";
     private string _name = "";
     private string _currency = "USD";
@@ -68,7 +81,7 @@
             if (string.IsNullOrWhiteSpace(_code)) return;
             MudDialog.Close(DialogResult.Ok(new CreateShopRequest(
                 _code.Trim(), _name.Trim(), _currency.Trim(),
-                _timeZone.Trim(), _countryCode.Trim())));
+                _timeZone.Trim(), _countryCode.Trim(), _tenantId)));
         }
     }
 }

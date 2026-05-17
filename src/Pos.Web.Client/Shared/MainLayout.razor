@@ -74,7 +74,11 @@ else
         {
             try
             {
-                var shops = await Api.ListShopsAsync();
+                // Bind to one of the user's own shops; admins fall back to the
+                // tenant's full shop list if they aren't pinned to one yet.
+                var shops = await Api.ListMyShopsAsync();
+                if (shops.Count == 0 && Auth.Has("shops.read"))
+                    shops = await Api.ListShopsAsync();
                 if (shops.Count > 0) await CurrentShop.SetAsync(shops[0].Id);
             }
             catch { /* shop list failure is non-fatal here */ }

@@ -49,6 +49,7 @@
     {
         await Auth.LoadAsync();
         if (!Auth.IsAuthenticated) { Nav.NavigateTo("/login", true); return; }
+        if (!Auth.Has("settings.manage")) { Nav.NavigateTo("/", true); return; }
         await Reload();
     }
 

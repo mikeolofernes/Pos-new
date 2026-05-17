@@ -7,7 +7,7 @@
     <MudNavLink Href="/quick-selects" Icon="@Icons.Material.Filled.GridView"  Match="NavLinkMatch.Prefix">Quick selects</MudNavLink>
     <MudNavLink Href="/inventory"  Icon="@Icons.Material.Filled.Warehouse"    Match="NavLinkMatch.Prefix">Inventory</MudNavLink>
     <MudNavLink Href="/shifts"    Icon="@Icons.Material.Filled.AccessTime"    Match="NavLinkMatch.Prefix">Shifts</MudNavLink>
-    @if (Auth.Has("shops.read"))
+    @if (Auth.Has("shops.write"))
     {
         <MudNavLink Href="/shops" Icon="@Icons.Material.Filled.Store"          Match="NavLinkMatch.Prefix">Shops</MudNavLink>
     }

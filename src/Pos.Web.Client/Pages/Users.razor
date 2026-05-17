@@ -65,8 +65,12 @@
     {
         await Auth.LoadAsync();
         if (!Auth.IsAuthenticated) { Nav.NavigateTo("/login", true); return; }
+        if (!Auth.Has("users.manage")) { Nav.NavigateTo("/", true); return; }
+        _shops = (await Api.ListShopsAsync()).ToList();
         await Reload();
     }
+
+    private List<ShopDto> _shops = new();
 
     private async Task Reload()
     {
@@ -77,7 +81,8 @@
 
     private async Task OpenCreate()
     {
-        var dialog = await Dialogs.ShowAsync<UserDialog>("New user",
+        var parameters = new DialogParameters<UserDialog> { { x => x.Shops, _shops } };
+        var dialog = await Dialogs.ShowAsync<UserDialog>("New user", parameters,
             new DialogOptions { FullWidth = true, MaxWidth = MaxWidth.Small });
         var result = await dialog.Result;
         if (result?.Canceled is false && result.Data is CreateUserRequest body)
@@ -91,7 +96,11 @@
 
     private async Task OpenEdit(UserDto u)
     {
-        var parameters = new DialogParameters<UserDialog> { { x => x.Existing, u } };
+        var parameters = new DialogParameters<UserDialog>
+        {
+            { x => x.Existing, u },
+            { x => x.Shops, _shops }
+        };
         var dialog = await Dialogs.ShowAsync<UserDialog>("Edit user", parameters,
             new DialogOptions { FullWidth = true, MaxWidth = MaxWidth.Small });
         var result = await dialog.Result;
